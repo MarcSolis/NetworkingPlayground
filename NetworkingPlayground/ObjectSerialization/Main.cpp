@@ -1,6 +1,6 @@
-
 #include "RoboCat.h"
 #include "NaivelySerialization.h"
+#include "NetConnectionSimulator.h"
 #include <cassert>
 
 
@@ -36,10 +36,28 @@ void NaiveSerializationTest2()
 	assert(originalRC == copyRC);	// It fails since std::vector is not naively copiable (a deep copy is required)
 }
 
+void StreamSerializationTest()
+{
+	NetConnectionSimulator connectionSimulator;
+
+	RoboCat originalRC(5, 1);
+	const char name[]{"Abel"};
+	originalRC.SetName(name, sizeof(name));
+
+	RoboCat copyRC;
+
+	assert(originalRC != copyRC);
+
+	connectionSimulator.SimulateReplication(&originalRC, &copyRC);
+
+	assert(originalRC == copyRC);
+}
+
 
 int main()
 {
 	NaiveSerializationTest();
+	StreamSerializationTest();
 
 	return 0;
 }

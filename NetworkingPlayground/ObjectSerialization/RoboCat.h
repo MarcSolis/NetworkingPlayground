@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <vector>
+#include "ISerializableObject.h"
 
 class NaiveRoboCat
 {
@@ -23,7 +24,7 @@ protected:
 	virtual void Update() = 0;
 };
 
-class RoboCat : Object
+class RoboCat : public Object, public Serialization::ISerializableObject
 {
 public:
 	RoboCat();
@@ -37,9 +38,11 @@ public:
 
 protected:
 	virtual void Update() override {};
+	virtual void Serialize(Stream::OutputMemoryStream& stream) override;
+	virtual void Deserialize(Stream::InputMemoryStream& stream) override;
 
 private:
-	static constexpr uint32_t BUFFER_SIZE = 64;
+	static constexpr uint32_t BUFFER_SIZE = 16;
 	int32_t mHealth;
 	int32_t mMeowCount;
 	char mName[BUFFER_SIZE]{"Unknown"};

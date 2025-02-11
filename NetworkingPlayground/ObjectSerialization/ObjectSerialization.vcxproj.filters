@@ -24,6 +24,15 @@
     <ClCompile Include="RoboCat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ISerializableObject.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputMemoryStream.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NetConnectionSimulator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OutputMemoryStream.h">
@@ -33,6 +42,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="NaivelySerialization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputMemoryStream.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StreamTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NetConnectionSimulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
