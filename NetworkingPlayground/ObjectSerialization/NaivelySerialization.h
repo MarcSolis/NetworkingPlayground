@@ -21,13 +21,13 @@ namespace Serialization {
 	template<typename ObjectTypeT>
 	void NaivelySerialization<ObjectTypeT>::SimulateSerialization(const ObjectTypeT* inObj, ObjectTypeT* outObj)
 	{
-		ObjectTypeT* address;
 		{
 			ObjectTypeT tempObj = *inObj;	// Use of temp object to simulate network conditions (pointers cannot be serialized due to data mismatch in memory address)
-			address = &tempObj;
-			NaivelySendObj(address);
+			NaivelySendObj(&tempObj);
+			
+			memset(&tempObj, NULL, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
 		}
-		memset(address, NULL, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
+
 		NaivelyReceiveObj(outObj);
 
 		std::cout << "[NaivelySerialization] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << sizeof(ObjectTypeT) << " bytes" << std::endl;

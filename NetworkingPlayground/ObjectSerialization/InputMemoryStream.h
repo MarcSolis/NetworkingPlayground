@@ -9,13 +9,13 @@ namespace Stream {
 	public:
 		InputMemoryStream(const char* inBuffer, uint32_t inByteCount);
 
-		uint32_t GetRemainingDataSize() const;
+		uint32_t GetRemainingDataSize() const noexcept;
 
 		template <is_primitive_type T>
-		void Read(T& outData);
+		void Read(T& outData) noexcept;
 
-		template <is_primitive_type T>
-		void Read(T outData[], size_t size);
+		template<is_primitive_type T, size_t N>
+		void Read(T (&outData)[N]) noexcept;
 
 	private:
 		void ReadInternal(void* outData, size_t inByteCount);
@@ -26,15 +26,15 @@ namespace Stream {
 	};
 
 	template<is_primitive_type T>
-	inline void InputMemoryStream::Read(T& outData)
+	inline void InputMemoryStream::Read(T& outData) noexcept
 	{
 		ReadInternal(&outData, sizeof(outData));
 	}
 
-	template<is_primitive_type T>
-	inline void InputMemoryStream::Read(T outData[], size_t size)
+	template<is_primitive_type T, size_t N>
+	inline void InputMemoryStream::Read(T (&outData)[N]) noexcept
 	{
-		ReadInternal(outData, size);
+		ReadInternal(&outData, sizeof(outData));
 	}
 }
 

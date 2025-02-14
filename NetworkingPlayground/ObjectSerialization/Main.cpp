@@ -6,7 +6,7 @@
 
 void NaiveSerializationTest()
 {
-	Serialization::NaivelySerialization<NaiveRoboCat> serializer;
+	Serialization::NaivelySerialization<NaiveRoboCat> serializer{};
 
 	NaiveRoboCat originalRC(5, 1);
 	NaiveRoboCat copyRC;
@@ -20,7 +20,7 @@ void NaiveSerializationTest()
 
 void NaiveSerializationTest2()
 {
-	Serialization::NaivelySerialization<RoboCat> serializer;
+	Serialization::NaivelySerialization<RoboCat> serializer{};
 
 	RoboCat originalRC(5, 1);
 	const char name[]{ "Abel"};

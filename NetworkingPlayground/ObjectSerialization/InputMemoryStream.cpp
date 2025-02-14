@@ -3,11 +3,11 @@
 #include <algorithm>
 
 Stream::InputMemoryStream::InputMemoryStream(const char* inBuffer, uint32_t inByteCount) : 
-	mbuffer(inBuffer), mCapacity(inByteCount), mHead(0)
+	mbuffer(inBuffer), mHead(0), mCapacity(inByteCount)
 {
 }
 
-uint32_t Stream::InputMemoryStream::GetRemainingDataSize() const
+uint32_t Stream::InputMemoryStream::GetRemainingDataSize() const noexcept
 {
 	return mCapacity - mHead;
 }

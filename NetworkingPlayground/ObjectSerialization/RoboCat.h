@@ -20,6 +20,9 @@ private:
 
 class Object
 {
+public:
+	virtual ~Object() = default;
+
 protected:
 	virtual void Update() = 0;
 };

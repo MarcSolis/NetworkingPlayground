@@ -1,6 +1,7 @@
 #pragma once
 #include "StreamTypes.h"
 #include <cstdint>
+#include <span>
 
 namespace Stream {
 
@@ -11,13 +12,13 @@ namespace Stream {
 		~OutputMemoryStream();
 
 		const char* GetBufferPtr() const { return mBuffer; }
-		uint32_t GetLength() const { return mHead; }
+		uint32_t GetLength() const noexcept { return mHead; }
 
 		template <is_primitive_type T>
-		void Write(T inData);
+		void Write(const T& inData);
 
-		template <is_primitive_type T>
-		void Write(T inData[], size_t size);
+		template <is_primitive_type T, size_t N>
+		void Write(T (& inData)[N]);
 
 	private:
 		void WriteInternal(const void* inData, size_t inByteCount);
@@ -29,15 +30,15 @@ namespace Stream {
 	};
 
 	template<is_primitive_type T>
-	inline void OutputMemoryStream::Write(T inData)
+	inline void OutputMemoryStream::Write(const T& inData)
 	{
 		WriteInternal(&inData, sizeof(inData));
 	}
 
-	template<is_primitive_type T>
-	inline void OutputMemoryStream::Write(T inData[], size_t size)
+	template<is_primitive_type T, size_t N>
+	inline void OutputMemoryStream::Write(T(&inData)[N])
 	{
-		WriteInternal(inData, size);
+		WriteInternal(&inData, sizeof(inData));
 	}
 
 }
