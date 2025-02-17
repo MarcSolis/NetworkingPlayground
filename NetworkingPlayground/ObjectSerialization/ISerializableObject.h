@@ -1,11 +1,12 @@
 #pragma once
 
-namespace Stream {
-	class OutputMemoryStream;
-	class InputMemoryStream;
-}
-
 namespace Serialization {
+
+	namespace Stream {
+		class OutputMemoryStream;
+		class InputMemoryStream;
+	}
+
 
 	class ISerializableObject
 	{

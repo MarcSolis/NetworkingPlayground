@@ -53,5 +53,8 @@
     <ClInclude Include="NetConnectionSimulator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ByteSwapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

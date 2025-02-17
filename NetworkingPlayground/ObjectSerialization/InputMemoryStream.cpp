@@ -2,25 +2,31 @@
 #include <cstdlib>
 #include <algorithm>
 
-Stream::InputMemoryStream::InputMemoryStream(const char* inBuffer, uint32_t inByteCount) : 
-	mbuffer(inBuffer), mHead(0), mCapacity(inByteCount)
-{
-}
+namespace Serialization {
+	namespace Stream {
 
-uint32_t Stream::InputMemoryStream::GetRemainingDataSize() const noexcept
-{
-	return mCapacity - mHead;
-}
+		InputMemoryStream::InputMemoryStream(const char* inBuffer, uint32_t inByteCount) :
+			mbuffer(inBuffer), mHead(0), mCapacity(inByteCount)
+		{
+		}
 
-void Stream::InputMemoryStream::ReadInternal(void* outData, size_t inByteCount)
-{
-	uint32_t resultHead = mHead + static_cast<uint32_t>(inByteCount);
+		uint32_t InputMemoryStream::GetRemainingDataSize() const noexcept
+		{
+			return mCapacity - mHead;
+		}
 
-	if (resultHead <= mCapacity)
-	{
-		std::memcpy(outData, mbuffer + mHead, inByteCount);
-		mHead = resultHead;
+		void InputMemoryStream::ReadInternal(void* outData, size_t inByteCount)
+		{
+			uint32_t resultHead = mHead + static_cast<uint32_t>(inByteCount);
+
+			if (resultHead <= mCapacity)
+			{
+				std::memcpy(outData, mbuffer + mHead, inByteCount);
+				mHead = resultHead;
+			}
+
+			// Handle copy failure
+		}
 	}
-	
-	// Handle copy failure
 }
+

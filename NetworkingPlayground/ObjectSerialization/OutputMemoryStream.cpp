@@ -1,8 +1,8 @@
 #include "OutputMemoryStream.h"
 #include <cstdlib>
 #include <algorithm>
+namespace Serialization { namespace Stream {
 
-namespace Stream {
 	OutputMemoryStream::OutputMemoryStream() : mBuffer(nullptr), mHead(0), mCapacity(0)
 	{
 		ReallocBuffer(32);
@@ -19,7 +19,7 @@ namespace Stream {
 		uint32_t resultHead = mHead + static_cast<uint32_t>(inByteCount);
 		if (resultHead > mCapacity)
 		{
-			ReallocBuffer(std::max(mCapacity*2, resultHead));
+			ReallocBuffer(std::max(mCapacity * 2, resultHead));
 		}
 
 		std::memcpy(mBuffer + mHead, inData, inByteCount);
@@ -36,5 +36,5 @@ namespace Stream {
 
 		//handle realloc failure 
 	}
-}
+}}
 

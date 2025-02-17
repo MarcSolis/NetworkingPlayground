@@ -58,7 +58,7 @@ bool RoboCat::operator!=(const RoboCat& other)
 	return !operator==(other);
 }
 
-void RoboCat::Serialize(Stream::OutputMemoryStream& stream)
+void RoboCat::Serialize(Serialization::Stream::OutputMemoryStream& stream)
 {
 	stream.Write(mHealth);
 	stream.Write(mMeowCount);
@@ -66,7 +66,7 @@ void RoboCat::Serialize(Stream::OutputMemoryStream& stream)
 	//no solution for mMiceIndices yet 
 }
 
-void RoboCat::Deserialize(Stream::InputMemoryStream& stream)
+void RoboCat::Deserialize(Serialization::Stream::InputMemoryStream& stream)
 {
 	stream.Read(mHealth);
 	stream.Read(mMeowCount);

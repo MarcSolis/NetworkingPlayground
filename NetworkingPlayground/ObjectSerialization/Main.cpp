@@ -2,6 +2,7 @@
 #include "NaivelySerialization.h"
 #include "NetConnectionSimulator.h"
 #include <cassert>
+#include "ByteSwapper.h"
 
 
 void NaiveSerializationTest()
