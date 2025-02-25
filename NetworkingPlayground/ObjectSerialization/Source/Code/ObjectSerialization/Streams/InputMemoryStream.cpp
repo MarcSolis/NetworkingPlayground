@@ -1,5 +1,6 @@
 #include "InputMemoryStream.h"
 #include <cstdlib>
+#include <cstring>
 #include <algorithm>
 
 namespace Serialization {

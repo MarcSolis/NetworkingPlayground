@@ -26,7 +26,7 @@ namespace Serialization {
 			ObjectTypeT tempObj = *inObj;	// Use of temp object to simulate network conditions (pointers cannot be serialized due to data mismatch in memory address)
 			NaivelySendObj(&tempObj);
 			
-			memset(&tempObj, NULL, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
+			memset(&tempObj, 0, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
 		}
 
 		NaivelyReceiveObj(outObj);

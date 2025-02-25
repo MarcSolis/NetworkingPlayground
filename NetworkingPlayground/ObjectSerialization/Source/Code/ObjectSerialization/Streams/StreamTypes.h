@@ -1,11 +1,12 @@
 #pragma once
+#include <cstddef>
 #include <concepts>
 
 
 namespace Serialization {
 	class ISerializableObject;
 
-	template <typename T, size_t size>
+	template <typename T, std::size_t size>
 	concept is_same_size = sizeof(T) == size;
 
 	namespace Stream {

@@ -1,6 +1,7 @@
 #include "RoboCat.h"
 #include "Streams/OutputMemoryStream.h"
 #include "Streams/InputMemoryStream.h"
+#include <cstring>
 #include <cassert>
 
 #pragma region NaiveRoboCat
@@ -38,8 +39,8 @@ void RoboCat::SetName(const char* name, size_t length)
 {
 	assert(length <= BUFFER_SIZE);
 
-	memset(mName, 0, sizeof(mName));
-	memcpy(mName, name, length);
+	std::memset(mName, 0, sizeof(mName));
+	std::memcpy(mName, name, length);
 }
 
 void RoboCat::CatchMices(std::vector<int32_t> miceIndices)

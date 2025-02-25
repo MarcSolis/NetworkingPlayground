@@ -24,7 +24,7 @@ void NetConnectionSimulator::SimulateReplication(const ObjectTypeT* src, ObjectT
 	{
 		ObjectTypeT tempObj{*src};
 		static_cast<Serialization::ISerializableObject*>(&tempObj)->Serialize(outputStream);
-		memset(&tempObj, NULL, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
+		memset(&tempObj, 0, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
 	}
 	Serialization::Stream::InputMemoryStream inputStream(outputStream.GetBufferPtr(), outputStream.GetLength());
 	static_cast<Serialization::ISerializableObject*>(dest)->Deserialize(inputStream);

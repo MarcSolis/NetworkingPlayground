@@ -1,6 +1,8 @@
 #include "OutputMemoryStream.h"
 #include <cstdlib>
+#include <cstring>
 #include <algorithm>
+
 namespace Serialization { namespace Stream {
 
 	OutputMemoryStream::OutputMemoryStream() : mBuffer(nullptr), mHead(0), mCapacity(0)
