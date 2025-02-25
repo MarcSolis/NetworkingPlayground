@@ -1,7 +1,7 @@
 #pragma once
+#include "ObjectSerialization/ISerializableObject.h"
 #include <cstdint>
 #include <vector>
-#include "ISerializableObject.h"
 
 class NaiveRoboCat
 {

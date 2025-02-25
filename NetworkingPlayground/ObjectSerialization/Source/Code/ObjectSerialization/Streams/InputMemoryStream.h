@@ -1,8 +1,9 @@
 #pragma once
-#include "StreamTypes.h"
+#include "ObjectSerialization/Streams/StreamTypes.h"
+#include "ObjectSerialization/ByteSwapper.h"
 #include <cstdint>
 #include <bit>
-#include "ByteSwapper.h"
+
 
 namespace Serialization { namespace Stream {
 

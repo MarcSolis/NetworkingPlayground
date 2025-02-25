@@ -1,6 +1,6 @@
 #include "RoboCat.h"
-#include "OutputMemoryStream.h"
-#include "InputMemoryStream.h"
+#include "Streams/OutputMemoryStream.h"
+#include "Streams/InputMemoryStream.h"
 #include <cassert>
 
 #pragma region NaiveRoboCat

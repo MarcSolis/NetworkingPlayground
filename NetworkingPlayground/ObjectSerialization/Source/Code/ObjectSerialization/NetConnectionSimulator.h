@@ -1,7 +1,7 @@
 #pragma once
-#include "StreamTypes.h"
-#include "OutputMemoryStream.h"
-#include "InputMemoryStream.h"
+#include "ObjectSerialization/Streams/StreamTypes.h"
+#include "ObjectSerialization/Streams/OutputMemoryStream.h"
+#include "ObjectSerialization/Streams/InputMemoryStream.h"
 #include "ISerializableObject.h"
 #include <iostream>
 
