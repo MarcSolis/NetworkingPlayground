@@ -52,8 +52,8 @@ bld/
 [Oo]bj/
 
 # Visual C++ cache files
-.vs/
-ipch/
+**/.vs/
+**/ipch/
 *.aps
 *.ncb
 *.opensdf
@@ -65,3 +65,11 @@ ipch/
 *.vsp
 *.vspx
 
+### VisualStudioCode ###
+**/.vscode/
+
+# Local History for Visual Studio Code
+**/.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
