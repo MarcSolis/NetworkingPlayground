@@ -10,6 +10,7 @@
 cmake -B Solution/ -S Generator/
 ```
   > Alternatively you can install CMake GUI and configure from the editor if you don't want to use cmd.
+
 This will generate the .sln file inside the "Solution" folder that you can open with VisualStudio.
 
 
