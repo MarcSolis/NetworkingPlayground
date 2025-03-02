@@ -1,6 +1,7 @@
 #include "RoboCat.h"
 #include "Streams/OutputMemoryStream.h"
 #include "Streams/InputMemoryStream.h"
+#include "Streams/OutputMemoryBitStream.h"
 #include <cstring>
 #include <cassert>
 
@@ -72,6 +73,14 @@ void RoboCat::Deserialize(Serialization::Stream::InputMemoryStream& stream)
 	stream.Read(mHealth);
 	stream.Read(mMeowCount);
 	stream.Read(mName);
+	//no solution for mMiceIndices yet 
+}
+
+void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
+{
+	stream.Write(mHealth, 8);
+	stream.Write(mMeowCount, 16);
+	stream.Write(mName);
 	//no solution for mMiceIndices yet 
 }
 

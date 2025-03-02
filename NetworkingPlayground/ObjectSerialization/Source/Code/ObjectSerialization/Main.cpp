@@ -49,7 +49,24 @@ void StreamSerializationTest()
 
 	assert(originalRC != copyRC);
 
-	connectionSimulator.SimulateReplication(&originalRC, &copyRC);
+	connectionSimulator.SimulateStreamReplication(&originalRC, &copyRC);
+
+	assert(originalRC == copyRC);
+}
+
+void StreamBitSerializationTest()
+{
+	NetConnectionSimulator connectionSimulator;
+
+	RoboCat originalRC(5, 1);
+	const char name[]{"Abel"};
+	originalRC.SetName(name, sizeof(name));
+
+	RoboCat copyRC;
+
+	assert(originalRC != copyRC);
+
+	connectionSimulator.SimulateBitStreamReplication(&originalRC, &copyRC);
 
 	assert(originalRC == copyRC);
 }
@@ -59,6 +76,7 @@ int main()
 {
 	NaiveSerializationTest();
 	StreamSerializationTest();
+	StreamBitSerializationTest();
 
 	return 0;
 }

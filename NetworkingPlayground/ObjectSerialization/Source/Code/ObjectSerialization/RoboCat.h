@@ -44,6 +44,9 @@ protected:
 	virtual void Serialize(Serialization::Stream::OutputMemoryStream& stream) override;
 	virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
 
+	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
+	//virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
+
 private:
 	static constexpr uint32_t BUFFER_SIZE = 16;
 	int32_t mHealth;
