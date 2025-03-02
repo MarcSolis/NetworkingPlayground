@@ -22,6 +22,9 @@ namespace Serialization { namespace Stream {
 		template <is_primitive_type T>
 		void Write(T inData, size_t inBitCount = sizeof(T) << 3);
 
+		template <is_primitive_type T>
+		void WriteAlt(T inData, size_t inBitCount = sizeof(T) << 3);
+
 		template <is_primitive_type T, size_t N>
 		void Write(T(&inData)[N]);
 
@@ -29,6 +32,10 @@ namespace Serialization { namespace Stream {
 		void WriteBitsInternal(uint8_t inData, size_t inBitCount);
 		void WriteBits(const void* inData, size_t inBitCount);
 		void ReallocBuffer(uint32_t inNewBitLength);
+
+
+		void WriteBitsAlt(const void* inData, size_t inBitCount);
+		void WriteBytesInternal(const void* inData, size_t inBitCount);
 
 		char* mBuffer;
 		uint32_t mBitHead;
@@ -69,6 +76,27 @@ namespace Serialization { namespace Stream {
 
 			WriteBits(&swappedData, sizeof(swappedData) << 3);
 		}
+	}
+
+	template<is_primitive_type T>
+	inline void OutputMemoryBitStream::WriteAlt(T inData, size_t inBitCount)
+	{
+		assert(inBitCount <= (sizeof(inData) << 3));
+
+		uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			WriteBitsInternal(static_cast<uint8_t>(inData), freeBits);
+			inBitCount -= freeBits;
+		}
+
+		inData = inData >> freeBits;
+
+		// Load aligned
+		WriteBytesInternal(&inData, inBitCount);
 	}
 
 }}

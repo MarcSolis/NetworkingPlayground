@@ -30,8 +30,8 @@ protected:
 class RoboCat : public Object, public Serialization::ISerializableObject
 {
 public:
-	RoboCat();
-	RoboCat(int32_t health, int32_t meowCount);
+	RoboCat() noexcept;
+	RoboCat(int32_t health, int32_t meowCount) noexcept;
 
 	void SetName(const char* name, size_t length);
 	void CatchMices(std::vector<int32_t> miceIndices);
@@ -39,13 +39,18 @@ public:
 	bool operator==(const RoboCat& other);
 	bool operator!=(const RoboCat& other);
 
+	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
+	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream);
+
 protected:
 	virtual void Update() override {};
 	virtual void Serialize(Serialization::Stream::OutputMemoryStream& stream) override;
 	virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
 
-	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
+	//virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
 	//virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
+
+	
 
 private:
 	static constexpr uint32_t BUFFER_SIZE = 16;

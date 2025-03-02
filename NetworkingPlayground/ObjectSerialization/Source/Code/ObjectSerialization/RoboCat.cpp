@@ -4,10 +4,13 @@
 #include "Streams/OutputMemoryBitStream.h"
 #include <cstring>
 #include <cassert>
+#include <cstdlib>
 
 #pragma region NaiveRoboCat
 NaiveRoboCat::NaiveRoboCat() : mHealth(10), mMeowCount(3) 
 {
+	mHealth = rand();
+	mMeowCount = rand();
 }
 
 
@@ -28,11 +31,11 @@ bool NaiveRoboCat::operator!=(const NaiveRoboCat& other)
 #pragma endregion // Naive
 
 
-RoboCat::RoboCat() : mHealth(10), mMeowCount(3)
+RoboCat::RoboCat() noexcept : mHealth(10), mMeowCount(3)
 {
 }
 
-RoboCat::RoboCat(int32_t health, int32_t meowCount) : mHealth(health), mMeowCount(meowCount)
+RoboCat::RoboCat(int32_t health, int32_t meowCount) noexcept : mHealth(health), mMeowCount(meowCount)
 {
 }
 
@@ -78,9 +81,17 @@ void RoboCat::Deserialize(Serialization::Stream::InputMemoryStream& stream)
 
 void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
 {
-	stream.Write(mHealth, 8);
-	stream.Write(mMeowCount, 16);
-	stream.Write(mName);
+	stream.Write(mHealth, 30);
+	stream.Write(mMeowCount, 30);
+	//stream.Write(mName);
+	//no solution for mMiceIndices yet 
+}
+
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
+{
+	stream.WriteAlt(mHealth, 30);
+	stream.WriteAlt(mMeowCount, 30);
+	//stream.Write(mName);
 	//no solution for mMiceIndices yet 
 }
 

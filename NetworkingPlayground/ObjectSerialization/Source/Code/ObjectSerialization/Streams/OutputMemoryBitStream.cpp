@@ -71,5 +71,44 @@ namespace Serialization { namespace Stream {
 
 		//handle realloc failure 
 	}
+
+
+	void OutputMemoryBitStream::WriteBitsAlt(const void* inData, size_t inBitCount)
+	{
+		const char* srcByte = static_cast<const char*>(inData);
+
+		uint8_t bitOffset = mBitHead & 0x7;
+		if (bitOffset > 0)
+		{
+			WriteBitsInternal(*srcByte, 8-bitOffset);
+		}
+
+
+		// Write bytes
+		while (inBitCount > 8)
+		{
+			WriteBitsInternal(*srcByte, 8);
+			++srcByte;
+			inBitCount -= 8;
+		}
+		// Write bits left
+		if (inBitCount > 0)
+		{
+			WriteBitsInternal(*srcByte, inBitCount);
+		}
+	}
+
+	void OutputMemoryBitStream::WriteBytesInternal(const void* inData, size_t inBitCount)
+	{
+		// ensure we have space 
+		uint32_t nextBitHead = mBitHead + static_cast<uint32_t>(inBitCount);
+		if (nextBitHead > mBitCapacity)
+		{
+			ReallocBuffer(std::max(mBitCapacity * 2, nextBitHead));
+		}
+
+		std::memcpy(mBuffer + (mBitHead>>3), inData, (inBitCount+7)>>3);
+		mBitHead = nextBitHead;
+	}
 }}
 

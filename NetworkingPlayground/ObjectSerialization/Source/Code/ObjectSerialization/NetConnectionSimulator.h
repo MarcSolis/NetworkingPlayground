@@ -5,6 +5,7 @@
 #include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
 #include "ISerializableObject.h"
 #include <iostream>
+#include "ObjectSerialization/RoboCat.h"
 
 
 class NetConnectionSimulator
@@ -18,6 +19,10 @@ public:
 	template <typename ObjectTypeT>
 		requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
 	void SimulateBitStreamReplication(const ObjectTypeT* src, ObjectTypeT* dest);
+
+	template <typename ObjectTypeT>
+		requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
+	void SimulateBitStreamReplicationAlt(const ObjectTypeT* src, ObjectTypeT* dest);
 
 };
 
@@ -50,5 +55,21 @@ inline void NetConnectionSimulator::SimulateBitStreamReplication(const ObjectTyp
 	//Serialization::Stream::InputMemoryBitStream inputStream(outputStream.GetBufferPtr(), outputStream.GetBitLength());
 	//static_cast<Serialization::ISerializableObject*>(dest)->Deserialize(inputStream);
 
-	std::cout << "[OutputMemoryBitStream] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
+	//std::cout << "[OutputMemoryBitStream] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
+}
+
+template<typename ObjectTypeT>
+	requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
+inline void NetConnectionSimulator::SimulateBitStreamReplicationAlt(const ObjectTypeT* src, ObjectTypeT* dest)
+{
+	Serialization::Stream::OutputMemoryBitStream outputStream;
+	{
+		ObjectTypeT tempObj{*src};
+		static_cast<RoboCat*>(&tempObj)->SerializeAlt(outputStream);
+		memset(&tempObj, 0, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
+	}
+	//Serialization::Stream::InputMemoryBitStream inputStream(outputStream.GetBufferPtr(), outputStream.GetBitLength());
+	//static_cast<Serialization::ISerializableObject*>(dest)->Deserialize(inputStream);
+
+	//std::cout << "[OutputMemoryBitStreamAlt] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
 }
