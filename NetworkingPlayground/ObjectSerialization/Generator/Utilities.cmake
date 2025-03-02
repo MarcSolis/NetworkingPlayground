@@ -60,3 +60,13 @@ function(SetLibraryCppStandard target_name cpp_standard)
 		CXX_STANDARD ${cpp_standard}
 		CXX_STANDARD_REQUIRED ON)
 endfunction()
+
+function(SetCompileOptionsMSVC project_name)
+	target_compile_options(${project_name} PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/bigobj>)
+	target_compile_options(${project_name} PRIVATE /WX)	#Enable Warnings as errors
+endfunction()
+
+function(SetCompileOptionsGNU project_name)
+	set_target_properties(${MAIN_PROJECT_NAME} PROPERTIES CMAKE_XCODE_SCHEME_ADDRESS_SANITIZER ON)
+	add_compile_options(-Werror)	#Enable Warnings as errors
+endfunction()
