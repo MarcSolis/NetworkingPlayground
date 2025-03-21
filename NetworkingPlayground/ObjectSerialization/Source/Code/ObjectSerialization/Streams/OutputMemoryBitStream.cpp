@@ -75,12 +75,10 @@ namespace Serialization { namespace Stream {
 
 	void OutputMemoryBitStream::WriteFreeBits(uint8_t inData, uint8_t inBitCount)
 	{
-		assert(inBitCount <= 8);
-
 		const uint32_t byteOffset = mBitHead >> 3;
 		const uint32_t bitOffset = mBitHead & 0x7;
 
-		assert(bitOffset + inBitCount == 8);
+		assert(bitOffset + inBitCount <= 8);
 
 		// calculate which bits of the current byte to preserve
 		const uint8_t currentMask = ~(0xff << bitOffset);

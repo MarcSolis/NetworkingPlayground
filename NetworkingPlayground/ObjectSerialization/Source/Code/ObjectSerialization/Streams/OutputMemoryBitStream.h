@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <bit>
 #include <cassert>
+#include <algorithm>
 
 
 namespace Serialization { namespace Stream {
@@ -87,7 +88,7 @@ namespace Serialization { namespace Stream {
 		{
 			// Align to byte
 			uint32_t freeBits{8 - bitOffset};
-			WriteFreeBits(static_cast<uint8_t>(inData), freeBits);
+			WriteFreeBits(static_cast<uint8_t>(inData), std::min(static_cast<uint32_t>(inBitCount), freeBits));
 
 			if (inBitCount < freeBits)
 			{
