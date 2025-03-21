@@ -73,7 +73,7 @@ namespace Serialization { namespace Stream {
 	}
 
 
-	void OutputMemoryBitStream::WriteFreeBits(uint8_t inData, uint8_t inBitCount)
+	void OutputMemoryBitStream::WriteFreeBits(uint8_t inData, size_t inBitCount)
 	{
 		const uint32_t byteOffset = mBitHead >> 3;
 		const uint32_t bitOffset = mBitHead & 0x7;
