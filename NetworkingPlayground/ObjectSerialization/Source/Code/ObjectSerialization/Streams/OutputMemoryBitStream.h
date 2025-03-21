@@ -33,8 +33,7 @@ namespace Serialization { namespace Stream {
 		void WriteBits(const void* inData, size_t inBitCount);
 		void ReallocBuffer(uint32_t inNewBitLength);
 
-
-		void WriteBitsAlt(const void* inData, size_t inBitCount);
+		void WriteFreeBits(uint8_t inData, uint8_t inBitCount);
 		void WriteBytesInternal(const void* inData, size_t inBitCount);
 
 		char* mBuffer;
@@ -83,17 +82,23 @@ namespace Serialization { namespace Stream {
 	{
 		assert(inBitCount <= (sizeof(inData) << 3));
 
-		uint8_t bitOffset = mBitHead & 0x7;
-		uint8_t freeBits{0};
+		uint32_t bitOffset = mBitHead & 0x7;
 		if (bitOffset > 0)
 		{
 			// Align to byte
-			freeBits = 8 - bitOffset;
-			WriteBitsInternal(static_cast<uint8_t>(inData), freeBits);
+			uint32_t freeBits{8 - bitOffset};
+			WriteFreeBits(static_cast<uint8_t>(inData), freeBits);
+
+			if (inBitCount < freeBits)
+			{
+				return;	// No extra bytes needed
+			}
+
 			inBitCount -= freeBits;
+			inData = inData >> freeBits;
 		}
 
-		inData = inData >> freeBits;
+		
 
 		// Load aligned
 		WriteBytesInternal(&inData, inBitCount);

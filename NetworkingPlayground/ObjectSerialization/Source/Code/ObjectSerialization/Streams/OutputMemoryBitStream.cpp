@@ -73,29 +73,20 @@ namespace Serialization { namespace Stream {
 	}
 
 
-	void OutputMemoryBitStream::WriteBitsAlt(const void* inData, size_t inBitCount)
+	void OutputMemoryBitStream::WriteFreeBits(uint8_t inData, uint8_t inBitCount)
 	{
-		const char* srcByte = static_cast<const char*>(inData);
+		assert(inBitCount <= 8);
 
-		uint8_t bitOffset = mBitHead & 0x7;
-		if (bitOffset > 0)
-		{
-			WriteBitsInternal(*srcByte, 8-bitOffset);
-		}
+		const uint32_t byteOffset = mBitHead >> 3;
+		const uint32_t bitOffset = mBitHead & 0x7;
 
+		assert(bitOffset + inBitCount == 8);
 
-		// Write bytes
-		while (inBitCount > 8)
-		{
-			WriteBitsInternal(*srcByte, 8);
-			++srcByte;
-			inBitCount -= 8;
-		}
-		// Write bits left
-		if (inBitCount > 0)
-		{
-			WriteBitsInternal(*srcByte, inBitCount);
-		}
+		// calculate which bits of the current byte to preserve
+		const uint8_t currentMask = ~(0xff << bitOffset);
+		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (inData << bitOffset);
+
+		mBitHead += static_cast<uint32_t>(inBitCount);
 	}
 
 	void OutputMemoryBitStream::WriteBytesInternal(const void* inData, size_t inBitCount)
