@@ -2,6 +2,9 @@
 #include "ObjectSerialization/ISerializableObject.h"
 #include <cstdint>
 #include <vector>
+#include "Streams/OutputMemoryBitStream2.h"
+
+#define ONE_BIT 1
 
 class NaiveRoboCat
 {
@@ -41,6 +44,7 @@ public:
 
 	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream);
+	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream);
 
 protected:
 	virtual void Update() override {};
@@ -58,4 +62,10 @@ private:
 	int32_t mMeowCount;
 	char mName[BUFFER_SIZE]{"Unknown"};
 	std::vector<int32_t> mMiceIndices;
+
+
+	uint64_t dummyVal64{9876543210};
+	uint32_t dummyVal32{123456789};
+	uint16_t dummyVal16{5555};
+	bool dummyB{true};
 };

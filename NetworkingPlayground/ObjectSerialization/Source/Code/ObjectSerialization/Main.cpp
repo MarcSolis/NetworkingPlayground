@@ -89,53 +89,100 @@ void StreamBitSerializationTestAlt()
 	//assert(originalRC == copyRC);
 }
 
-void StreamBitSerializationPerfTest()
+void StreamBitSerializationPerfTest(std::vector<RoboCat>& roboCats)
 {
-	std::vector<RoboCat> roboCats(4096);
 	Serialization::Stream::OutputMemoryBitStream outputStream;
 
 	{
-		profiler::Timer timer(true);
-		for (auto&& rb : roboCats)
+		//profiler::Timer timer(true);
+		for (auto& rb : roboCats)
 		{
 			rb.Serialize(outputStream);
 		}
 	}
 
-	std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
+	//std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
 }
 
-void StreamBitAltSerializationPerfTest()
+void StreamBitAltSerializationPerfTest(std::vector<RoboCat>& roboCats)
 {
-	std::vector<RoboCat> roboCats(4096);
 	Serialization::Stream::OutputMemoryBitStream outputStream;
 
 	{
 		profiler::Timer timer(true);
-		for (auto&& rb : roboCats)
+		for (auto& rb : roboCats)
 		{
 			rb.SerializeAlt(outputStream);
 		}
 	}
 
-	std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
+	//std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
+}
+
+void StreamBitAltSerializationPerfTest2(std::vector<RoboCat>& roboCats)
+{
+	Serialization::Stream::OutputMemoryBitStream2 outputStream;
+
+	{
+		profiler::Timer timer(true);
+		for (auto& rb : roboCats)
+		{
+			rb.SerializeAlt(outputStream);
+		}
+	}
+
+	//std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
 }
 
 
-#pragma optimize("", off)
 int main(int argc, char** argv)
 {
 	//NaiveSerializationTest();
 	//StreamSerializationTest();
+	//StreamBitSerializationTest();
+	//StreamBitSerializationTestAlt();
+
+	Serialization::Stream::OutputMemoryBitStream outputStream;
+	Serialization::Stream::OutputMemoryBitStream2 outputStream2;
+	RoboCat rb;
+
+	constexpr int iterations{1000000};
+
+
+	std::cout << "StreamBit Optimization V1 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream);
+		}
+	}
+
+	std::cout << "StreamBit Optimization V2 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream2);
+		}
+	}
+
+
+
+	return 0;
+
 	if (argc == 1)
 	{
-		std::cout << "StreamBit Original Test" << std::endl;
-		StreamBitSerializationPerfTest();
+		//std::cout << "StreamBit Original Test" << std::endl;
+		//rb.Serialize(outputStream);
+
+		std::cout << "StreamBit Optimization V2 Test" << std::endl;
+		//rb.SerializeAlt(outputStream2);
 	}
 	else
 	{
-		std::cout << "StreamBit Alternative Test" << std::endl;
-		StreamBitAltSerializationPerfTest();
+		std::cout << "StreamBit Optimization V1 Test" << std::endl;
+		//rb.SerializeAlt(outputStream);
 	}
 	
 	return 0;

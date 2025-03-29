@@ -1,6 +1,7 @@
 #pragma once
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/ByteSwapper.h"
+#include "ObjectSerialization/Streams/Int2Type.h"
 #include <cstdint>
 #include <bit>
 #include <cassert>
@@ -9,27 +10,21 @@
 
 namespace Serialization { namespace Stream {
 
-	template <int v>
-	struct Int2Type
-	{
-		enum {value = v};
-	};
-
 	class OutputMemoryBitStream
 	{
 	public:
 		OutputMemoryBitStream();
 		~OutputMemoryBitStream();
 
-		const char* GetBufferPtr() const { return mBuffer; }
-		uint32_t GetBitLength() const noexcept { return mBitHead; }
-		uint32_t GetByteLength() const noexcept { return (mBitHead + 7) >> 3; }
+		inline const char* GetBufferPtr() const noexcept { return mBuffer; }
+		inline uint32_t GetBitLength() const noexcept { return mBitHead; }
+		inline uint32_t GetByteLength() const noexcept { return (mBitHead + 7) >> 3; }
 
 
 		template <is_primitive_type T>
 		void Write(T inData, size_t inBitCount = sizeof(T) << 3);
 
-		template <is_primitive_type T, size_t InBitCount = sizeof(T) << 3>
+		template<is_primitive_type T, size_t InBitCount = sizeof(T) << 3>
 		void WriteAlt(T inData);
 
 		template <is_primitive_type T, size_t N>
@@ -134,7 +129,7 @@ namespace Serialization { namespace Stream {
 	template<is_primitive_type T, size_t InBitCount>
 	inline void OutputMemoryBitStream::WriteAlt(T inData)
 	{
-		assert(inBitCount <= (sizeof(inData) << 3));
+		static_assert(InBitCount <= (sizeof(inData) << 3));
 
 		constexpr bool isLessThanByte{InBitCount < 8};
 
@@ -145,7 +140,7 @@ namespace Serialization { namespace Stream {
 		else
 		{
 			T swappedData{Serialization::ByteSwap(inData)};
-			WriteInternal(inData, InBitCount, Int2Type<isLessThanByte>());
+			WriteInternal(swappedData, InBitCount, Int2Type<isLessThanByte>());
 		}
 	}
 

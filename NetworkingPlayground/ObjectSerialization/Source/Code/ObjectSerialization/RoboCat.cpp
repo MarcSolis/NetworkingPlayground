@@ -81,17 +81,33 @@ void RoboCat::Deserialize(Serialization::Stream::InputMemoryStream& stream)
 
 void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
 {
-	stream.Write(mHealth, 30);
-	stream.Write(mMeowCount, 30);
+	stream.Write(dummyB, 1);
+	stream.Write(dummyVal64);
+
+	/*
+	stream.Write(mHealth, 32);
+	stream.Write(mMeowCount, 32);
+	*/
 	//stream.Write(mName);
 	//no solution for mMiceIndices yet 
 }
 
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
 {
-	stream.WriteAlt(mHealth, 30);
-	stream.WriteAlt(mMeowCount, 30);
+	//stream.WriteAlt<bool, 1>(dummyB);
+	stream.WriteAlt(dummyVal64);
+
+	/*
+	stream.WriteAlt(mHealth, 32);
+	stream.WriteAlt(mMeowCount, 32);
+	*/
 	//stream.Write(mName);
 	//no solution for mMiceIndices yet 
+}
+
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream)
+{
+	//stream.Write<bool, 1>(dummyB);
+	stream.Write(dummyVal64);
 }
 
