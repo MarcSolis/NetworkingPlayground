@@ -6,7 +6,7 @@
 #include "Tools/Profiler/Timer.h"
 
 
-void NaiveSerializationTest()
+static void NaiveSerializationTest()
 {
 	Serialization::NaivelySerialization<NaiveRoboCat> serializer{};
 
@@ -20,7 +20,7 @@ void NaiveSerializationTest()
 	assert(originalRC == copyRC);
 }
 
-void NaiveSerializationTest2()
+static void NaiveSerializationTest2()
 {
 	Serialization::NaivelySerialization<RoboCat> serializer{};
 
@@ -38,7 +38,7 @@ void NaiveSerializationTest2()
 	assert(originalRC == copyRC);	// It fails since std::vector is not naively copiable (a deep copy is required)
 }
 
-void StreamSerializationTest()
+static void StreamSerializationTest()
 {
 	NetConnectionSimulator connectionSimulator;
 
@@ -55,7 +55,7 @@ void StreamSerializationTest()
 	assert(originalRC == copyRC);
 }
 
-void StreamBitSerializationTest()
+static void StreamBitSerializationTest()
 {
 	NetConnectionSimulator connectionSimulator;
 
@@ -72,7 +72,7 @@ void StreamBitSerializationTest()
 	//assert(originalRC == copyRC);
 }
 
-void StreamBitSerializationTestAlt()
+static void StreamBitSerializationTestAlt()
 {
 	NetConnectionSimulator connectionSimulator;
 
@@ -89,7 +89,7 @@ void StreamBitSerializationTestAlt()
 	//assert(originalRC == copyRC);
 }
 
-void StreamBitSerializationPerfTest(std::vector<RoboCat>& roboCats)
+static void StreamBitSerializationPerfTest(std::vector<RoboCat>& roboCats)
 {
 	Serialization::Stream::OutputMemoryBitStream outputStream;
 
@@ -104,7 +104,7 @@ void StreamBitSerializationPerfTest(std::vector<RoboCat>& roboCats)
 	//std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
 }
 
-void StreamBitAltSerializationPerfTest(std::vector<RoboCat>& roboCats)
+static void StreamBitAltSerializationPerfTest(std::vector<RoboCat>& roboCats)
 {
 	Serialization::Stream::OutputMemoryBitStream outputStream;
 
@@ -119,7 +119,7 @@ void StreamBitAltSerializationPerfTest(std::vector<RoboCat>& roboCats)
 	//std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
 }
 
-void StreamBitAltSerializationPerfTest2(std::vector<RoboCat>& roboCats)
+static void StreamBitAltSerializationPerfTest2(std::vector<RoboCat>& roboCats)
 {
 	Serialization::Stream::OutputMemoryBitStream2 outputStream;
 
@@ -144,6 +144,8 @@ int main(int argc, char** argv)
 
 	Serialization::Stream::OutputMemoryBitStream outputStream;
 	Serialization::Stream::OutputMemoryBitStream2 outputStream2;
+	Serialization::Stream::OutputMemoryBitStream3 outputStream3;
+	Serialization::Stream::OutputMemoryBitStream4 outputStream4;
 	RoboCat rb;
 
 	constexpr int iterations{1000000};
@@ -164,6 +166,34 @@ int main(int argc, char** argv)
 		for (auto i = 0; i < iterations; ++i)
 		{
 			rb.SerializeAlt(outputStream2);
+		}
+	}
+
+	std::cout << "StreamBit Optimization V3 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream3);
+		}
+	}
+
+	std::cout << "StreamBit Optimization V4 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream4);
+		}
+	}
+
+
+	std::cout << "StreamBit Base Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.Serialize(outputStream);
 		}
 	}
 
