@@ -41,7 +41,10 @@ Once the **CMakeLists.txt** is located, it will automatically build the MakeFile
 5. Open a terminal console and navigate to the root folder of the project
    > e.g., .../NetworkingPlayground/ObjectSerialization
 
-   Execute the following command:
+   Execute the following commands:
+```
+chmod +x Generator/vscodeSetup.sh
+```
 ```
 ./Generator/vscodeSetup.sh
 ```
