@@ -32,6 +32,22 @@ ${workspaceFolder}/Solution
     > e.g., .../NetworkingPlayground/ObjectSerialization
 4. A prompt will appear asking for the **CMakeLists.txt** as shown below. 
 If the prompt does not appear, you can manually open the command line (Ctrl + Shift + P) and type "***CMake: Configure***". This will open the same prompt shown below.
-  <img width="987" alt="LinuxPrompt2" src="https://github.com/user-attachments/assets/91865519-2d18-44fb-954d-5e62add03af7" />
+<p align="center">
+   <img width="100%" alt="LinuxPrompt2" src="https://github.com/user-attachments/assets/91865519-2d18-44fb-954d-5e62add03af7" />
+</p>
 
-Once the **CMakeLists.txt** is located, it will automatically build the MakeFile and create the .vscode files, and the project will be properly set up.
+Once the **CMakeLists.txt** is located, it will automatically build the MakeFile and create the .vscode folder.
+
+5. Open a terminal console and navigate to the root folder of the project
+   > e.g., .../NetworkingPlayground/ObjectSerialization
+
+   Execute the following command:
+```
+./Generator/vscodeSetup.sh
+```
+   This will generate the correct configuration for debugging your program within VSCode. Although it should not be necessary, restarting VSCode is recommended.
+
+6. Inside VSCode, check that the "Run and Debug" dropdown is set to **Debug project with g++-13**.
+<p align="center">
+   <img width="40%" alt="LinuxPrompt3" src="https://github.com/user-attachments/assets/199646bf-c8b7-4f49-ad03-cfbb32da9c9b" />
+</p>
