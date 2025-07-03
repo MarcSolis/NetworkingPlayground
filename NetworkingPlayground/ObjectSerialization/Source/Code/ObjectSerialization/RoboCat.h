@@ -1,8 +1,10 @@
 #pragma once
 #include "ObjectSerialization/ISerializableObject.h"
+#include "ObjectSerialization/Streams/OutputMemoryBitStream2.h"
+
 #include <cstdint>
 #include <vector>
-#include "Streams/OutputMemoryBitStream2.h"
+
 
 #define ONE_BIT 1
 

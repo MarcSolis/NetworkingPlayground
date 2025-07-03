@@ -1,5 +1,6 @@
 #pragma once
 #include "ObjectSerialization/Streams/StreamTypes.h"
+
 #include <cstdint>
 #include <bit>
 

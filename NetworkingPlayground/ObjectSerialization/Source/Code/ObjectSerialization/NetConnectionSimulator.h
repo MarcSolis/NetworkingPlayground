@@ -3,9 +3,10 @@
 #include "ObjectSerialization/Streams/OutputMemoryStream.h"
 #include "ObjectSerialization/Streams/InputMemoryStream.h"
 #include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
-#include "ISerializableObject.h"
-#include <iostream>
+#include "ObjectSerialization/ISerializableObject.h"
 #include "ObjectSerialization/RoboCat.h"
+
+#include <iostream>
 
 
 class NetConnectionSimulator

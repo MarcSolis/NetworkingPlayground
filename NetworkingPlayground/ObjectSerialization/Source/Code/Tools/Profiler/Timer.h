@@ -1,4 +1,4 @@
-// Copyright (c) 2023 Marc Solís Serrano
+// Copyright (c) 2023 Marc Solï¿½s Serrano
 
 #pragma once
 #include <chrono>

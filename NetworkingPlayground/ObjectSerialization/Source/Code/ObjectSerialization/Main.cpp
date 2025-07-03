@@ -1,9 +1,11 @@
-#include "RoboCat.h"
-#include "NaivelySerialization.h"
-#include "NetConnectionSimulator.h"
-#include <cassert>
-#include "ByteSwapper.h"
+#include "ObjectSerialization/RoboCat.h"
+#include "ObjectSerialization/NaivelySerialization.h"
+#include "ObjectSerialization/NetConnectionSimulator.h"
+#include "ObjectSerialization/ByteSwapper.h"
+
 #include "Tools/Profiler/Timer.h"
+
+#include <cassert>
 
 
 static void NaiveSerializationTest()

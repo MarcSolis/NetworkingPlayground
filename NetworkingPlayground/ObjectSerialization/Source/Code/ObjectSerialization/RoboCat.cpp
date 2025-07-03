@@ -1,7 +1,8 @@
-#include "RoboCat.h"
-#include "Streams/OutputMemoryStream.h"
-#include "Streams/InputMemoryStream.h"
-#include "Streams/OutputMemoryBitStream.h"
+#include "ObjectSerialization/RoboCat.h"
+#include "ObjectSerialization/Streams/OutputMemoryStream.h"
+#include "ObjectSerialization/Streams/InputMemoryStream.h"
+#include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
+
 #include <cstring>
 #include <cassert>
 #include <cstdlib>

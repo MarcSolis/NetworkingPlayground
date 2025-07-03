@@ -1,7 +1,9 @@
-#include "InputMemoryStream.h"
+#include "ObjectSerialization/Streams/InputMemoryStream.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
+
 
 namespace Serialization {
 	namespace Stream {

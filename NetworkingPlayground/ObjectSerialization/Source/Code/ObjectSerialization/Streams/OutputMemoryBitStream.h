@@ -2,6 +2,7 @@
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/ByteSwapper.h"
 #include "ObjectSerialization/Streams/Int2Type.h"
+
 #include <cstdint>
 #include <bit>
 #include <cassert>

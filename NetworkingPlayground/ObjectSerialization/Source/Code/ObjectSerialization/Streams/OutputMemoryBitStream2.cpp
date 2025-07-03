@@ -1,8 +1,10 @@
-#include "OutputMemoryBitStream2.h"
+#include "ObjectSerialization/Streams/OutputMemoryBitStream2.h"
+
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>
 #include <cassert>
+
 
 namespace Serialization { namespace Stream {
 
