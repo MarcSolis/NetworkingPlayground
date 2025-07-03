@@ -146,6 +146,7 @@ int main(int argc, char** argv)
 	Serialization::Stream::OutputMemoryBitStream2 outputStream2;
 	Serialization::Stream::OutputMemoryBitStream3 outputStream3;
 	Serialization::Stream::OutputMemoryBitStream4 outputStream4;
+	Serialization::Stream::OutputMemoryBitStream5 outputStream5;
 	RoboCat rb;
 
 	constexpr int iterations{1000000};
@@ -187,6 +188,14 @@ int main(int argc, char** argv)
 		}
 	}
 
+	std::cout << "StreamBit Optimization V5 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream5);
+		}
+	}
 
 	std::cout << "StreamBit Base Test" << std::endl;
 	{

@@ -47,6 +47,7 @@ public:
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream);
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream3& stream);
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream4& stream);
+	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream5& stream);
 
 protected:
 	virtual void Update() override {};

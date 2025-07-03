@@ -115,5 +115,68 @@ namespace Serialization { namespace Stream {
 		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (mBuffer[byteOffset + 1] << bitOffset);
 	}
 #pragma endregion //v4
+
+#pragma region V5
+	OutputMemoryBitStream5::OutputMemoryBitStream5() : mBuffer(nullptr), mBitHead(0), mBitCapacity(0)
+	{
+		ReallocBuffer(256);
+	}
+
+	OutputMemoryBitStream5::~OutputMemoryBitStream5()
+	{
+		std::free(mBuffer);
+	}
+
+	void OutputMemoryBitStream5::ReallocBuffer(uint32_t inNewBitLength)
+	{
+		const uint32_t newByteSize = (inNewBitLength + 7) >> 3;
+		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxSize))
+		{
+			mBuffer = static_cast<char*>(reallocated);
+			mBitCapacity = newByteSize << 3;
+		}
+
+		//handle realloc failure 
+	}
+
+	uint8_t OutputMemoryBitStream5::FillFreeBits(char* inData)	//More than a byte
+	{
+		const uint32_t byteOffset = mBitHead >> 3;
+		const uint8_t bitOffset = mBitHead & 0x7;
+
+		// calculate which bits of the current byte to preserve
+		const uint8_t currentMask = ~(0xff << bitOffset);
+		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (*inData << bitOffset);
+
+		assert((8 - bitOffset) & 0x7 < 8);
+
+		return (8 - bitOffset) & 0x7;	// Added bits (all available bits)
+	}
+
+	uint8_t OutputMemoryBitStream5::WriteFreeBits(char* inData, const uint8_t inBitCount)
+	{
+		const uint32_t byteOffset = mBitHead >> 3;
+		const uint8_t bitOffset = mBitHead & 0x7;
+
+		// calculate which bits of the current byte to preserve
+		const uint8_t currentMask = ~(0xff << bitOffset);
+		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (*inData << bitOffset);
+
+		const uint8_t availableBits = (8 - bitOffset) & 0x7;
+		return availableBits * (inBitCount >= availableBits) + inBitCount * (inBitCount < availableBits);	// Added bits (min between available bits and inBitCount)
+	}
+
+
+	/*void OutputMemoryBitStream5::WriteFreeBits(const uint8_t bitOffset, const uint32_t inBitCount)
+	{
+		const uint32_t byteOffset = mBitHead >> 3;
+
+		assert(bitOffset + inBitCount <= 8);
+
+		// calculate which bits of the current byte to preserve
+		const uint8_t currentMask = ~(0xff << bitOffset);
+		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (mBuffer[byteOffset + 1] << bitOffset);
+	}*/
+#pragma endregion //v5
 }}
 

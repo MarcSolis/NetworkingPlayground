@@ -2,6 +2,9 @@
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/ByteSwapper.h"
 #include "ObjectSerialization/Streams/Int2Type.h"
+
+#include "Tools/ConstMath/ConstMath.h"
+
 #include <cstdint>
 #include <bit>
 #include <cassert>
@@ -349,7 +352,7 @@ namespace Serialization { namespace Stream {
 	{
 		void* targetPtr = mBuffer + GetByteLength();
 
-		size_t byteSpace = static_cast<size_t>(mBitCapacity - mBitHead) >> 3;
+		size_t byteSpace = (static_cast<size_t>(mBitCapacity - mBitHead) >> 3) + InDataMaxSize;
 		bool succeed = std::align(alignof(T), sizeof(T), targetPtr, byteSpace);
 
 		assert(succeed);	// Allocator must take into account the extra space needed
@@ -357,6 +360,144 @@ namespace Serialization { namespace Stream {
 		return targetPtr;
 	}
 #pragma endregion //v4
+
+#pragma region V5
+	/// <summary>
+	/// Load the InData at the end of the buffer (aligned), then shifted if needed.
+	/// PROS:
+	///		This way we use a probably already cached line, and if not, we will load a line that we will need anyways.
+	///		If buffer is byte-aligned, no shifting needed.
+	///		Compatibility and performance boosts due to memory alignment.
+	/// CONS: 
+	///		Extra calculus for ensuring memory accesses are aligned.
+	/// </summary>
+	class OutputMemoryBitStream5
+	{
+	public:
+		OutputMemoryBitStream5();
+		~OutputMemoryBitStream5();
+
+		inline const char* GetBufferPtr() const noexcept { return mBuffer; }
+		inline uint32_t GetBitLength() const noexcept { return mBitHead; }
+
+
+		template<is_primitive_type T, uint32_t InBitCount = sizeof(T) << 3>
+		void Write(T inData);
+
+	private:
+		inline uint32_t GetNextFreeByte() const noexcept { return (mBitHead + 7) >> 3; }
+		void ReallocBuffer(uint32_t inNewBitLength);
+
+
+		uint8_t FillFreeBits(char* inData);	// Byte or more
+		uint8_t WriteFreeBits(char* inData, const uint8_t inBitCount);	// Less than a byte
+
+		void WriteInternal(void* alignedDataIn, const uint32_t inBitCount, Int2Type<false>);	// Byte or more
+		void WriteInternal(void* alignedDataIn, const uint32_t inBitCount, Int2Type<true>);	// Less than a byte
+
+		//void WriteFreeBits(const uint8_t bitOffset, const uint32_t inBitCount);
+		template <typename T>
+		void* GetNextAlignedByte() const noexcept;
+
+		char* mBuffer;
+		uint32_t mBitHead;
+		uint32_t mBitCapacity;
+
+		static constexpr uint8_t InDataMaxSize = 8 * 2 - 1; // Max type size(8) + max alignment offset (7)
+		static constexpr std::endian mEndian{std::endian::little};
+	};
+
+	//At least one full byte. Extra memory needed for sure
+	inline void OutputMemoryBitStream5::WriteInternal(void* alignedDataIn, const uint32_t inBitCount, Int2Type<false>)	//Less than a byte = false
+	{
+		// Align to byte
+		const uint8_t bitOffset = mBitHead & 0x7;
+		const uint8_t freeBits{8u - bitOffset};
+		//WriteFreeBits(bitOffset, freeBits);
+
+		uintptr_t dataIn = reinterpret_cast<uintptr_t>(alignedDataIn);
+		dataIn >>= freeBits;	// remove duplicated data
+		std::memmove(&mBuffer[mBitHead >> 3], alignedDataIn, static_cast<size_t>(inBitCount + 7) >> 3);
+		mBitHead += inBitCount;
+
+		if (mBitHead > mBitCapacity)
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+
+	inline void OutputMemoryBitStream5::WriteInternal(void* alignedDataIn, const uint32_t inBitCount, Int2Type<true>) //Less than a byte = true
+	{
+		// Align to byte
+		const uint8_t bitOffset = mBitHead & 0x7;
+		const uint8_t freeBits{8u - bitOffset};
+
+		if (inBitCount <= freeBits)
+		{
+			//WriteFreeBits(bitOffset, inBitCount);
+			mBitHead += inBitCount;
+			return;	// No extra bytes needed
+		}
+
+		//WriteFreeBits(bitOffset, freeBits);
+
+		uintptr_t dataIn = reinterpret_cast<uintptr_t>(alignedDataIn);
+		dataIn >>= freeBits;	// remove duplicated data
+		std::memmove(&mBuffer[mBitHead >> 3], alignedDataIn, static_cast<size_t>(inBitCount + 7) >> 3);
+		mBitHead += inBitCount;
+
+		if (mBitHead > mBitCapacity)
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+
+	template<is_primitive_type T, uint32_t InBitCount>
+	inline void OutputMemoryBitStream5::Write(T inData)
+	{
+		static_assert(InBitCount <= (sizeof(inData) << 3));
+
+		if constexpr (std::endian::native != mEndian)
+		{
+			inData = Serialization::ByteSwap(inData);
+		}
+
+		char* inDataPtr{reinterpret_cast<char*>(&inData)};
+
+		//constexpr bool isLessThanByte{InBitCount < 8};
+
+		if constexpr (InBitCount < 8) // Is less than a byte
+		{
+			const uint8_t addedBits = WriteFreeBits(inDataPtr, InBitCount);
+			*inDataPtr >>= addedBits;
+
+			std::memcpy(mBuffer + GetNextFreeByte(), &inData, (InBitCount + 7) >> 3);
+			mBitHead += InBitCount;
+		}
+		else
+		{
+			const uint8_t addedBits = FillFreeBits(inDataPtr);
+			*inDataPtr >>= addedBits;
+
+			std::memcpy(mBuffer + GetNextFreeByte(), &inData, (InBitCount + 7) >> 3);
+			mBitHead += InBitCount;
+		}
+
+		if (mBitHead > mBitCapacity) [[unlikely]]
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+
+	template<typename T>
+	inline void* OutputMemoryBitStream5::GetNextAlignedByte() const noexcept
+	{
+		constexpr uint8_t bitsToShift = ConstMath::log2<alignof(T)>::value;	// narrowing cast valid, since max alignment is 8|4 on a x64|x32 platform
+		const size_t nextAlignedByte{(GetNextFreeByte() + alignof(T) - 1) >> bitsToShift};
+
+		return mBuffer + nextAlignedByte;
+	}
+#pragma endregion //v5
 }}
 
 

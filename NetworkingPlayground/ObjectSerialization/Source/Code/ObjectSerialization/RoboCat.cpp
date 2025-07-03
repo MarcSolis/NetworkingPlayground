@@ -82,6 +82,7 @@ void RoboCat::Deserialize(Serialization::Stream::InputMemoryStream& stream)
 void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
 {
 	stream.Write(dummyB, 1);
+	stream.Write(dummyVal32);
 	stream.Write(dummyVal64);
 
 	/*
@@ -94,8 +95,9 @@ void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
 
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
 {
-	//stream.WriteAlt<bool, 1>(dummyB);
-	stream.WriteAlt(dummyVal64);
+	stream.Write<bool>(dummyB);
+	stream.Write(dummyVal32);
+	stream.Write(dummyVal64);
 
 	/*
 	stream.WriteAlt(mHealth, 32);
@@ -105,9 +107,29 @@ void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
 	//no solution for mMiceIndices yet 
 }
 
+#define SERIALIZE_VALUES				\
+	/*stream.Write<bool, 1>(dummyB);*/		\
+	stream.Write<bool>(dummyB);			\
+	stream.Write(dummyVal32);			\
+	stream.Write(dummyVal64);			
+
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream)
 {
-	//stream.Write<bool, 1>(dummyB);
-	stream.Write(dummyVal64);
+	SERIALIZE_VALUES
+}
+
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream3& stream)
+{
+	SERIALIZE_VALUES
+}
+
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream4& stream)
+{
+	SERIALIZE_VALUES
+}
+
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream5& stream)
+{
+	SERIALIZE_VALUES
 }
 
