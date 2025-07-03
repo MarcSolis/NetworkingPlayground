@@ -150,7 +150,7 @@ namespace Serialization { namespace Stream {
 		const uint8_t currentMask = ~(0xff << bitOffset);
 		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (*inData << bitOffset);
 
-		assert((8 - bitOffset) & 0x7 < 8);
+		assert(((8 - bitOffset) & 0x7) < 8);
 
 		return (8 - bitOffset) & 0x7;	// Added bits (all available bits)
 	}

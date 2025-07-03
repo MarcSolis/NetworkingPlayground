@@ -9,6 +9,8 @@
 #include <bit>
 #include <cassert>
 #include <algorithm>
+#include <cstring>
+#include <memory>
 
 
 namespace Serialization { namespace Stream {
@@ -412,7 +414,7 @@ namespace Serialization { namespace Stream {
 	{
 		// Align to byte
 		const uint8_t bitOffset = mBitHead & 0x7;
-		const uint8_t freeBits{8u - bitOffset};
+		const uint8_t freeBits{uint8_t(8 - bitOffset)};
 		//WriteFreeBits(bitOffset, freeBits);
 
 		uintptr_t dataIn = reinterpret_cast<uintptr_t>(alignedDataIn);
@@ -430,7 +432,7 @@ namespace Serialization { namespace Stream {
 	{
 		// Align to byte
 		const uint8_t bitOffset = mBitHead & 0x7;
-		const uint8_t freeBits{8u - bitOffset};
+		const uint8_t freeBits{uint8_t(8 - bitOffset)};
 
 		if (inBitCount <= freeBits)
 		{
