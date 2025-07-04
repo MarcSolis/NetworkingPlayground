@@ -109,7 +109,7 @@ void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
 }
 
 #define SERIALIZE_VALUES				\
-	/*stream.Write<bool, 1>(dummyB);*/		\
+	stream.Write<bool, 1>(dummyB);		\
 	stream.Write<bool>(dummyB);			\
 	stream.Write(dummyVal32);			\
 	stream.Write(dummyVal64);			

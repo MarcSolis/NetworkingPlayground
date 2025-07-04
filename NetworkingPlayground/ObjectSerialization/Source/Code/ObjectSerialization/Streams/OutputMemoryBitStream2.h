@@ -375,6 +375,7 @@ namespace Serialization { namespace Stream {
 	/// </summary>
 	class OutputMemoryBitStream5
 	{
+		typedef unsigned char byte;
 	public:
 		OutputMemoryBitStream5();
 		~OutputMemoryBitStream5();
@@ -391,8 +392,10 @@ namespace Serialization { namespace Stream {
 		void ReallocBuffer(uint32_t inNewBitLength);
 
 
-		uint8_t FillFreeBits(char* inData);	// Byte or more
-		uint8_t WriteFreeBits(char* inData, const uint8_t inBitCount);	// Less than a byte
+		byte FillFreeBits(byte*const inData);	// Byte or more
+		byte WriteFreeBits(byte*const inData, const byte inBitCount);	// Less than a byte
+
+		inline void WriteBytes(byte&& inData, byte&& inBitCount);
 
 		void WriteInternal(void* alignedDataIn, const uint32_t inBitCount, Int2Type<false>);	// Byte or more
 		void WriteInternal(void* alignedDataIn, const uint32_t inBitCount, Int2Type<true>);	// Less than a byte
@@ -459,36 +462,55 @@ namespace Serialization { namespace Stream {
 	{
 		static_assert(InBitCount <= (sizeof(inData) << 3));
 
-		if constexpr (std::endian::native != mEndian)
+		constexpr uint32_t InByteCount = (InBitCount + 7) >> 3;
+
+		if constexpr (std::endian::native == mEndian)
 		{
-			inData = Serialization::ByteSwap(inData);
-		}
+			if constexpr (InBitCount < 8) // Is less than a byte
+			{
+				const byte addedBits = WriteFreeBits(reinterpret_cast<byte*>(&inData), InBitCount);
 
-		char* inDataPtr{reinterpret_cast<char*>(&inData)};
+				std::memcpy(mBuffer + GetNextFreeByte(), &(*reinterpret_cast<byte*>(&inData) >>= addedBits), InByteCount);
+				mBitHead += InBitCount;
+			}
+			else
+			{
+				const byte addedBits = FillFreeBits(reinterpret_cast<byte*>(&inData));
 
-		//constexpr bool isLessThanByte{InBitCount < 8};
-
-		if constexpr (InBitCount < 8) // Is less than a byte
-		{
-			const uint8_t addedBits = WriteFreeBits(inDataPtr, InBitCount);
-			*inDataPtr >>= addedBits;
-
-			std::memcpy(mBuffer + GetNextFreeByte(), &inData, (InBitCount + 7) >> 3);
-			mBitHead += InBitCount;
+				std::memcpy(mBuffer + GetNextFreeByte(), &(*reinterpret_cast<byte*>(&inData) >>= addedBits), InByteCount);
+				mBitHead += InBitCount;
+			}
 		}
 		else
 		{
-			const uint8_t addedBits = FillFreeBits(inDataPtr);
-			*inDataPtr >>= addedBits;
+			inData = Serialization::ByteSwap(inData);
 
-			std::memcpy(mBuffer + GetNextFreeByte(), &inData, (InBitCount + 7) >> 3);
-			mBitHead += InBitCount;
+			if constexpr (InBitCount < 8) // Is less than a byte
+			{
+				const byte addedBits = WriteFreeBits(reinterpret_cast<byte*>(&inData));
+
+				std::memcpy(mBuffer + GetNextFreeByte(), &(*reinterpret_cast<byte*>(&inData) >>= addedBits), InByteCount);
+				mBitHead += InBitCount;
+			}
+			else
+			{
+				const byte addedBits = FillFreeBits(reinterpret_cast<byte*>(&inData));
+
+				std::memcpy(mBuffer + GetNextFreeByte(), &(*reinterpret_cast<byte*>(&inData) >>= addedBits), InByteCount);
+				mBitHead += InBitCount;
+			}
 		}
 
 		if (mBitHead > mBitCapacity) [[unlikely]]
 		{
 			ReallocBuffer(mBitCapacity * 2);
 		}
+	}
+
+	void OutputMemoryBitStream5::WriteBytes(byte&& inData, byte&& inBitCount)
+	{
+		std::memcpy(mBuffer + GetNextFreeByte(), &inData, inBitCount);
+		mBitHead += inBitCount;
 	}
 
 	template<typename T>
