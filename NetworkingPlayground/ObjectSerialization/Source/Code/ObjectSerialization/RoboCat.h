@@ -47,11 +47,12 @@ public:
 	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream);
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream);
+	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream21& stream);
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream3& stream);
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream4& stream);
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream5& stream);
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream6& stream);
-	int GetReallocs(Serialization::Stream::OutputMemoryBitStream6& stream) const noexcept;
+	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream61& stream);
 
 protected:
 	virtual void Update() override {};

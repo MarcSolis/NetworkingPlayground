@@ -119,6 +119,11 @@ void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream
 	SERIALIZE_VALUES
 }
 
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream21& stream)
+{
+	SERIALIZE_VALUES
+}
+
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream3& stream)
 {
 	SERIALIZE_VALUES
@@ -139,7 +144,7 @@ void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream6& stream
 	SERIALIZE_VALUES
 }
 
-int RoboCat::GetReallocs(Serialization::Stream::OutputMemoryBitStream6& stream) const noexcept
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream61& stream)
 {
-	return 0; // static_cast<int>(stream.GetReallocsCount());
+	SERIALIZE_VALUES
 }

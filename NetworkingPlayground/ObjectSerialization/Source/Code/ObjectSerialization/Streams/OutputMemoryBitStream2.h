@@ -123,6 +123,117 @@ namespace Serialization { namespace Stream {
 	}
 #pragma endregion //v2
 
+#pragma region V2.1
+	/// <summary>
+	/// Load the InData at the end of the buffer, then shifted if needed.
+	/// PROS:
+	///		This way we use a probably already cached line, and if not, we will load a line that we will need anyways.
+	///		If buffer is byte-aligned, no shifting needed.
+	/// CONS: 
+	///		Platform dependent since this could try to load a value as uint64_t between to cache lines (unaligned memory support required).
+	/// </summary>
+	class OutputMemoryBitStream21
+	{
+	public:
+		OutputMemoryBitStream21();
+		~OutputMemoryBitStream21();
+
+		inline const char* GetBufferPtr() const noexcept { return mBuffer; }
+		inline uint32_t GetBitLength() const noexcept { return mBitHead; }
+		inline uint32_t GetByteLength() const noexcept { return (mBitHead + 7) >> 3; }
+
+
+		template<is_primitive_type T, uint32_t InBitCount = sizeof(T) << 3>
+		void Write(const T& inData);
+
+	private:
+		void ReallocBuffer(uint32_t inNewBitLength);
+
+		void WriteInternal(const uint32_t inBitCount, Int2Type<false>);	// Byte or more
+		void WriteInternal(const uint32_t inBitCount, Int2Type<true>);	// Less than a byte
+
+		void WriteFreeBits(const uint8_t bitOffset, const uint32_t inBitCount);
+
+		char* mBuffer;
+		uint64_t* mInData;
+		uint32_t mBitHead;
+		uint32_t mBitCapacity;
+
+		static constexpr uint8_t InDataMaxByteSize = 4;
+		static constexpr std::endian mEndian{std::endian::little};
+	};
+
+	//At least one full byte. Extra memory needed for sure
+	inline void OutputMemoryBitStream21::WriteInternal(const uint32_t inBitCount, Int2Type<false>)	//Less than a byte = false
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*mInData >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+		mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+
+		if (mBitHead > mBitCapacity)
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+
+	inline void OutputMemoryBitStream21::WriteInternal(const uint32_t inBitCount, Int2Type<true>) //Less than a byte = true
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			if (inBitCount <= freeBits)
+			{
+				WriteFreeBits(bitOffset, inBitCount);
+				mBitHead += inBitCount;
+				mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+				return;	// No extra bytes needed
+			}
+
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*mInData >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+		mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+
+		if (mBitHead > mBitCapacity)
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+
+	template<is_primitive_type T, uint32_t InBitCount>
+	inline void OutputMemoryBitStream21::Write(const T& inData)
+	{
+		static_assert(InBitCount <= (sizeof(inData) << 3));
+
+		constexpr bool isLessThanByte{InBitCount < 8};
+
+		if constexpr (std::endian::native == mEndian)
+		{
+			std::memcpy(mInData, &inData, (InBitCount + 7) >> 3);
+			WriteInternal(InBitCount, Int2Type<isLessThanByte>());
+		}
+		else
+		{
+			std::memcpy(mInData, Serialization::ByteSwap(inData), (InBitCount + 7) >> 3);
+			WriteInternal(InBitCount, Int2Type<isLessThanByte>());
+		}
+	}
+#pragma endregion //v2.1
+
 
 #pragma region V3
 	/// <summary>
@@ -560,7 +671,7 @@ namespace Serialization { namespace Stream {
 		uint64_t* mInData;
 		uint32_t mBitHead;
 		uint32_t mBitCapacity;
-		//uint8_t reallocs{0};
+		uint8_t reallocs{0};
 
 		static constexpr uint8_t InDataMaxByteSize = 8;
 		static constexpr std::endian mEndian{std::endian::little};
@@ -631,6 +742,213 @@ namespace Serialization { namespace Stream {
 		}
 	}
 #pragma endregion //v6
+
+#pragma region V6.1
+	//Defines a valid type to operate with raw data of size N
+	template <uint8_t N>
+	struct HeadAlignment;
+
+	template <>
+	struct HeadAlignment<1>
+	{
+		using type = uint8_t;
+	};
+
+	template <>
+	struct HeadAlignment<2>
+	{
+		using type = uint16_t;
+	};
+
+	template <>
+	struct HeadAlignment<4>
+	{
+		using type = uint32_t;
+	};
+
+	template <>
+	struct HeadAlignment<8>
+	{
+		using type = uint64_t;
+	};
+
+
+	/// <summary>
+	/// Load the InData at the end of the buffer, then shifted if needed.
+	/// PROS:
+	///		This way we use a probably already cached line, and if not, we will load a line that we will need anyways.
+	///		If buffer is byte-aligned, no shifting needed.
+	/// CONS: 
+	///		Platform dependent since this could try to load a value as uint64_t between to cache lines (unaligned memory support required).
+	/// </summary>
+	class OutputMemoryBitStream61
+	{
+		using byte = unsigned char;
+
+	public:
+		OutputMemoryBitStream61();
+		~OutputMemoryBitStream61();
+
+		[[nodiscard]] inline const byte* GetBufferPtr() const noexcept { return mBuffer; }
+		[[nodiscard]] inline uint32_t GetBitLength() const noexcept { return mBitHead; }
+
+		template<is_primitive_type T, uint32_t InBitCount = sizeof(T) << 3>
+		void Write(const T& inData);
+
+	private:
+		[[nodiscard]] inline void* GetNextFreeByte() const noexcept { return mBuffer + ((mBitHead + 7) >> 3); }
+		// Returns the minimum type size for containing the inserted data
+		static constexpr uint8_t GetMinTypeSize(const uint16_t inBytes) noexcept;
+
+		void ReallocBuffer(const uint32_t inNewBitLength);
+
+		template <is_unsigned_arithmetic_type T>
+		void BitAlignment(const uint32_t inBitCount, Int2Type<false>);
+		template <is_unsigned_arithmetic_type T>
+		void BitAlignment(const uint32_t inBitCount, Int2Type<true>);
+
+
+		void WriteInternal(const uint32_t inBitCount, Int2Type<false>);	// Byte or more
+		void WriteInternal(const uint32_t inBitCount, Int2Type<true>);	// Less than a byte
+
+		void WriteFreeBits(const uint8_t bitOffset, const uint32_t inBitCount);
+
+		byte* mBuffer;
+		uint64_t* mInData;
+		uint32_t mBitHead;
+		uint32_t mBitCapacity;
+		uint8_t reallocs{0};
+
+		static constexpr uint8_t InDataMaxByteSize = 8;
+		static constexpr std::endian mEndian{std::endian::little};
+	};
+
+	//At least one full byte. Extra memory needed for sure
+	inline void OutputMemoryBitStream61::WriteInternal(const uint32_t inBitCount, Int2Type<false>)	//Less than a byte = false
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*mInData >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+		mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+	}
+
+	inline void OutputMemoryBitStream61::WriteInternal(const uint32_t inBitCount, Int2Type<true>) //Less than a byte = true
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			if (inBitCount <= freeBits)
+			{
+				WriteFreeBits(bitOffset, inBitCount);
+				mBitHead += inBitCount;
+				mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+				return;	// No extra bytes needed
+			}
+
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*mInData >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+		mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+	}
+
+	template<is_primitive_type T, uint32_t InBitCount>
+	inline void OutputMemoryBitStream61::Write(const T& inData)
+	{
+		static_assert(InBitCount <= (sizeof(inData) << 3));
+
+		constexpr bool isLessThanByte{InBitCount < 8};
+		constexpr uint16_t byteSize = (InBitCount + 7) >> 3;
+
+		if constexpr (std::endian::native == mEndian)
+		{
+			std::memcpy(GetNextFreeByte(), &inData, (InBitCount + 7) >> 3);
+			BitAlignment<typename HeadAlignment<GetMinTypeSize(byteSize)>::type>(InBitCount, Int2Type<isLessThanByte>());
+		}
+		else
+		{
+			std::memcpy(GetNextFreeByte(), Serialization::ByteSwap(inData), (InBitCount + 7) >> 3);
+			BitAlignment<typename HeadAlignment<GetMinTypeSize(byteSize)>::type>(InBitCount, Int2Type<isLessThanByte>());
+		}
+
+		if (mBitHead > mBitCapacity) [[unlikely]]	// safe for primitive types, since mBuffer has an extra 8 bytes passed mBitCapacity
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+
+	template<is_unsigned_arithmetic_type T> 
+	inline void OutputMemoryBitStream61::BitAlignment(const uint32_t inBitCount, Int2Type<false>) //At least one full byte. Extra memory needed for sure
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*reinterpret_cast<T*>(GetNextFreeByte()) >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+	}
+
+	template<is_unsigned_arithmetic_type T>
+	inline void OutputMemoryBitStream61::BitAlignment(const uint32_t inBitCount, Int2Type<true>) //Less than a byte
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			if (inBitCount <= freeBits)
+			{
+				WriteFreeBits(bitOffset, inBitCount);
+				mBitHead += inBitCount;
+				mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+				return;	// No extra bytes needed
+			}
+
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*reinterpret_cast<T*>(GetNextFreeByte()) >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+	}
+
+	constexpr uint8_t OutputMemoryBitStream61::GetMinTypeSize(const uint16_t inBytes) noexcept
+	{
+		if (inBytes == 1)
+		{
+			return 1;
+		}
+		else if (inBytes == 2)
+		{
+			return 2;
+		}
+		else if (inBytes <= 4)
+		{
+			return 4;
+		}
+		else
+		{
+			return 8;
+		}
+	}
+#pragma endregion //v6.1
 }}
 
 
