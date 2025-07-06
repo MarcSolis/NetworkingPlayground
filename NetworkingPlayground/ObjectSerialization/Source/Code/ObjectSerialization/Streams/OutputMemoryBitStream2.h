@@ -51,7 +51,7 @@ namespace Serialization { namespace Stream {
 		uint32_t mBitHead;
 		uint32_t mBitCapacity;
 
-		static constexpr uint8_t InDataMaxSize = 4;
+		static constexpr uint8_t InDataMaxByteSize = 4;
 		static constexpr std::endian mEndian{std::endian::little};
 	};
 
@@ -160,7 +160,7 @@ namespace Serialization { namespace Stream {
 		uint32_t mBitHead;
 		uint32_t mBitCapacity;
 
-		static constexpr uint8_t InDataMaxSize = 4;
+		static constexpr uint8_t InDataMaxByteSize = 4;
 		static constexpr std::endian mEndian{std::endian::little};
 	};
 
@@ -274,7 +274,7 @@ namespace Serialization { namespace Stream {
 		uint32_t mBitHead;
 		uint32_t mBitCapacity;
 
-		static constexpr uint8_t InDataMaxSize = 8*2-1; // Max type size(8) + max alignment offset (7)
+		static constexpr uint8_t InDataMaxByteSize = 8*2-1; // Max type size(8) + max alignment offset (7)
 		static constexpr std::endian mEndian{std::endian::little};
 	};
 
@@ -354,7 +354,7 @@ namespace Serialization { namespace Stream {
 	{
 		void* targetPtr = mBuffer + GetByteLength();
 
-		size_t byteSpace = (static_cast<size_t>(mBitCapacity - mBitHead) >> 3) + InDataMaxSize;
+		size_t byteSpace = (static_cast<size_t>(mBitCapacity - mBitHead) >> 3) + InDataMaxByteSize;
 		bool succeed = std::align(alignof(T), sizeof(T), targetPtr, byteSpace);
 
 		assert(succeed);	// Allocator must take into account the extra space needed
@@ -408,7 +408,7 @@ namespace Serialization { namespace Stream {
 		uint32_t mBitHead;
 		uint32_t mBitCapacity;
 
-		static constexpr uint8_t InDataMaxSize = 8 * 2 - 1; // Max type size(8) + max alignment offset (7)
+		static constexpr uint8_t InDataMaxByteSize = 8 * 2 - 1; // Max type size(8) + max alignment offset (7)
 		static constexpr std::endian mEndian{std::endian::little};
 	};
 
@@ -487,7 +487,7 @@ namespace Serialization { namespace Stream {
 
 			if constexpr (InBitCount < 8) // Is less than a byte
 			{
-				const byte addedBits = WriteFreeBits(reinterpret_cast<byte*>(&inData));
+				const byte addedBits = WriteFreeBits(reinterpret_cast<byte*>(&inData), InBitCount);
 
 				std::memcpy(mBuffer + GetNextFreeByte(), &(*reinterpret_cast<byte*>(&inData) >>= addedBits), InByteCount);
 				mBitHead += InBitCount;
@@ -522,6 +522,115 @@ namespace Serialization { namespace Stream {
 		return mBuffer + nextAlignedByte;
 	}
 #pragma endregion //v5
+
+#pragma region V6
+	/// <summary>
+	/// Load the InData at the end of the buffer, then shifted if needed.
+	/// PROS:
+	///		This way we use a probably already cached line, and if not, we will load a line that we will need anyways.
+	///		If buffer is byte-aligned, no shifting needed.
+	/// CONS: 
+	///		Platform dependent since this could try to load a value as uint64_t between to cache lines (unaligned memory support required).
+	/// </summary>
+	class OutputMemoryBitStream6
+	{
+		using byte = unsigned char;
+
+	public:
+		OutputMemoryBitStream6();
+		~OutputMemoryBitStream6();
+
+		[[nodiscard]] inline const byte* GetBufferPtr() const noexcept { return mBuffer; }
+		[[nodiscard]] inline uint32_t GetBitLength() const noexcept { return mBitHead; }
+		[[nodiscard]] inline uint32_t GetByteLength() const noexcept { return (mBitHead + 7) >> 3; }
+		//inline uint8_t GetReallocsCount() const noexcept { return reallocs; }
+
+		template<is_primitive_type T, uint32_t InBitCount = sizeof(T) << 3>
+		void Write(const T& inData);
+
+	private:
+		void ReallocBuffer(const uint32_t inNewBitLength);
+
+		void WriteInternal(const uint32_t inBitCount, Int2Type<false>);	// Byte or more
+		void WriteInternal(const uint32_t inBitCount, Int2Type<true>);	// Less than a byte
+
+		void WriteFreeBits(const uint8_t bitOffset, const uint32_t inBitCount);
+
+		byte* mBuffer;
+		uint64_t* mInData;
+		uint32_t mBitHead;
+		uint32_t mBitCapacity;
+		//uint8_t reallocs{0};
+
+		static constexpr uint8_t InDataMaxByteSize = 8;
+		static constexpr std::endian mEndian{std::endian::little};
+	};
+
+	//At least one full byte. Extra memory needed for sure
+	inline void OutputMemoryBitStream6::WriteInternal(const uint32_t inBitCount, Int2Type<false>)	//Less than a byte = false
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*mInData >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+		mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+	}
+
+	inline void OutputMemoryBitStream6::WriteInternal(const uint32_t inBitCount, Int2Type<true>) //Less than a byte = true
+	{
+		const uint8_t bitOffset = mBitHead & 0x7;
+		uint8_t freeBits{0};
+		if (bitOffset > 0)
+		{
+			// Align to byte
+			freeBits = 8 - bitOffset;
+			if (inBitCount <= freeBits)
+			{
+				WriteFreeBits(bitOffset, inBitCount);
+				mBitHead += inBitCount;
+				mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+				return;	// No extra bytes needed
+			}
+
+			WriteFreeBits(bitOffset, freeBits);
+		}
+
+		*mInData >>= freeBits;	// Fix alignment
+		mBitHead += inBitCount;
+		mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+	}
+
+	template<is_primitive_type T, uint32_t InBitCount>
+	inline void OutputMemoryBitStream6::Write(const T& inData)
+	{
+		static_assert(InBitCount <= (sizeof(inData) << 3));
+
+		constexpr bool isLessThanByte{InBitCount < 8};
+
+		if constexpr (std::endian::native == mEndian)
+		{
+			std::memcpy(mInData, &inData, (InBitCount + 7) >> 3);
+			WriteInternal(InBitCount, Int2Type<isLessThanByte>());
+		}
+		else
+		{
+			std::memcpy(mInData, Serialization::ByteSwap(inData), (InBitCount + 7) >> 3);
+			WriteInternal(InBitCount, Int2Type<isLessThanByte>());
+		}
+
+		if (mBitHead > mBitCapacity) [[unlikely]]	// safe for primitive types, since mBuffer has an extra 8 bytes passed mBitCapacity
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+#pragma endregion //v6
 }}
 
 

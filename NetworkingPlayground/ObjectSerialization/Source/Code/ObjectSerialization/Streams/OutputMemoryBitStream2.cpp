@@ -22,12 +22,12 @@ namespace Serialization { namespace Stream {
 	void OutputMemoryBitStream2::ReallocBuffer(uint32_t inNewBitLength)
 	{
 		const uint32_t newByteSize = (inNewBitLength + 7) >> 3;
-		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxSize))
+		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxByteSize))
 		{
 			mBuffer = static_cast<char*>(reallocated);
 			mBitCapacity = newByteSize << 3;
 
-			mInData = reinterpret_cast<uint64_t*>(mBuffer + (mBitHead >> 3));
+			mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7 )>> 3));
 		}
 
 		//handle realloc failure 
@@ -96,7 +96,7 @@ namespace Serialization { namespace Stream {
 	void OutputMemoryBitStream4::ReallocBuffer(uint32_t inNewBitLength)
 	{
 		const uint32_t newByteSize = (inNewBitLength + 7) >> 3;
-		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxSize))
+		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxByteSize))
 		{
 			mBuffer = static_cast<char*>(reallocated);
 			mBitCapacity = newByteSize << 3;
@@ -132,7 +132,7 @@ namespace Serialization { namespace Stream {
 	void OutputMemoryBitStream5::ReallocBuffer(uint32_t inNewBitLength)
 	{
 		const uint32_t newByteSize = (inNewBitLength + 7) >> 3;
-		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxSize))
+		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxByteSize))
 		{
 			mBuffer = static_cast<char*>(reallocated);
 			mBitCapacity = newByteSize << 3;
@@ -181,5 +181,45 @@ namespace Serialization { namespace Stream {
 		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (mBuffer[byteOffset + 1] << bitOffset);
 	}*/
 #pragma endregion //v5
+
+#pragma region V6
+	OutputMemoryBitStream6::OutputMemoryBitStream6() : mBuffer(nullptr), mBitHead(0), mBitCapacity(0)
+	{
+		ReallocBuffer(256);
+	}
+
+	OutputMemoryBitStream6::~OutputMemoryBitStream6()
+	{
+		std::free(mBuffer);
+	}
+
+	void OutputMemoryBitStream6::ReallocBuffer(const uint32_t inNewBitLength)
+	{
+		const uint32_t newByteSize = (inNewBitLength + 7) >> 3;
+		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxByteSize))
+		{
+			mBuffer = static_cast<byte*>(reallocated);
+			mBitCapacity = newByteSize << 3;	// Guaranteed fit since newByteSize comes from a bitSize value.
+
+			mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+
+			//reallocs++;
+		}
+
+		//handle realloc failure 
+	}
+
+
+	void OutputMemoryBitStream6::WriteFreeBits(const uint8_t bitOffset, const uint32_t inBitCount)
+	{
+		const uint32_t byteOffset = mBitHead >> 3;
+
+		assert(bitOffset + inBitCount <= 8);
+
+		// calculate which bits of the current byte to preserve
+		const uint8_t currentMask = ~(0xff << bitOffset);
+		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (mBuffer[byteOffset + 1] << bitOffset);
+	}
+#pragma endregion //v6
 }}
 
