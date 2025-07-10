@@ -146,10 +146,13 @@ int main(int argc, char** argv)
 
 	Serialization::Stream::OutputMemoryBitStream outputStream;
 	Serialization::Stream::OutputMemoryBitStream2 outputStream2;
+	Serialization::Stream::OutputMemoryBitStream21 outputStream21;
 	Serialization::Stream::OutputMemoryBitStream3 outputStream3;
 	Serialization::Stream::OutputMemoryBitStream4 outputStream4;
 	Serialization::Stream::OutputMemoryBitStream5 outputStream5;
 	Serialization::Stream::OutputMemoryBitStream6 outputStream6;
+	Serialization::Stream::OutputMemoryBitStream61 outputStream61;
+	Serialization::Stream::OutputMemoryBitStream62 outputStream62;
 	RoboCat rb;
 
 	constexpr int iterations{1000000};
@@ -182,6 +185,15 @@ int main(int argc, char** argv)
 		}
 	}
 
+	std::cout << "StreamBit Optimization V2.1 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream21);
+		}
+	}
+
 	/*
 	std::cout << "StreamBit Optimization V3 Test" << std::endl;
 	{
@@ -201,6 +213,15 @@ int main(int argc, char** argv)
 		}
 	}*/
 
+	std::cout << "StreamBit Optimization V6.2 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream62);
+		}
+	}
+
 	std::cout << "StreamBit Optimization V5 Test" << std::endl;
 	{
 		profiler::Timer timer(true);
@@ -217,9 +238,17 @@ int main(int argc, char** argv)
 		{
 			rb.SerializeAlt(outputStream6);
 		}
-
-		//std::cout << "Reallocs: " << rb.GetReallocs(outputStream6) << std::endl;
 	}
+
+	std::cout << "StreamBit Optimization V6.1 Test" << std::endl;
+	{
+		profiler::Timer timer(true);
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.SerializeAlt(outputStream61);
+		}
+	}
+
 
 
 

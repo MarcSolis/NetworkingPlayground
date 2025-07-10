@@ -296,5 +296,37 @@ namespace Serialization { namespace Stream {
 		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (mBuffer[byteOffset + 1] << bitOffset);
 	}
 #pragma endregion //v6.1
+
+#pragma region V6.2
+	OutputMemoryBitStream62::OutputMemoryBitStream62() : mBuffer(nullptr), mBitHead(0), mBitCapacity(0)
+	{
+		ReallocBuffer(256);
+	}
+
+	OutputMemoryBitStream62::~OutputMemoryBitStream62()
+	{
+		std::free(mBuffer);
+	}
+
+	void OutputMemoryBitStream62::ReallocBuffer(const uint32_t inNewBitLength)
+	{
+		const uint32_t newByteSize = (inNewBitLength + 7) >> 3;
+		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxByteSize))
+		{
+			mBuffer = static_cast<byte*>(reallocated);
+			mBitCapacity = newByteSize << 3;	// Guaranteed fit since newByteSize comes from a bitSize value.
+		}
+
+		//handle realloc failure 
+	}
+
+	void OutputMemoryBitStream62::WriteFreeBits(const uint8_t occupiedBits)
+	{
+		const uint32_t byteOffset = mBitHead >> 3;
+		const uint8_t currentMask = ~(0xff << occupiedBits);	// calculate which bits of the current byte to preserve
+
+		mBuffer[byteOffset] = (mBuffer[byteOffset] & currentMask) | (mBuffer[byteOffset + 1] << occupiedBits);
+	}
+#pragma endregion //v6.2
 }}
 

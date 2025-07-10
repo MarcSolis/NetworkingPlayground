@@ -874,12 +874,12 @@ namespace Serialization { namespace Stream {
 
 		if constexpr (std::endian::native == mEndian)
 		{
-			std::memcpy(GetNextFreeByte(), &inData, (InBitCount + 7) >> 3);
+			std::memcpy(GetNextFreeByte(), &inData, byteSize);
 			BitAlignment<typename HeadAlignment<GetMinTypeSize(byteSize)>::type>(InBitCount, Int2Type<isLessThanByte>());
 		}
 		else
 		{
-			std::memcpy(GetNextFreeByte(), Serialization::ByteSwap(inData), (InBitCount + 7) >> 3);
+			std::memcpy(GetNextFreeByte(), Serialization::ByteSwap(inData), byteSize);
 			BitAlignment<typename HeadAlignment<GetMinTypeSize(byteSize)>::type>(InBitCount, Int2Type<isLessThanByte>());
 		}
 
@@ -918,7 +918,7 @@ namespace Serialization { namespace Stream {
 			{
 				WriteFreeBits(bitOffset, inBitCount);
 				mBitHead += inBitCount;
-				mInData = reinterpret_cast<uint64_t*>(mBuffer + ((mBitHead + 7) >> 3));
+				*reinterpret_cast<T*>(GetNextFreeByte()) >>= freeBits;	// Fix alignment
 				return;	// No extra bytes needed
 			}
 
@@ -949,6 +949,110 @@ namespace Serialization { namespace Stream {
 		}
 	}
 #pragma endregion //v6.1
+
+#pragma region V6.2
+	/// <summary>
+	/// Load the InData at the end of the buffer, then shifted if needed.
+	/// PROS:
+	///		This way we use a probably already cached line, and if not, we will load a line that we will need anyways.
+	///		If buffer is byte-aligned, no shifting needed.
+	/// CONS: 
+	///		Platform dependent since this could try to load a value as uint64_t between to cache lines (unaligned memory support required).
+	/// </summary>
+	class OutputMemoryBitStream62
+	{
+		using byte = unsigned char;
+
+	public:
+		OutputMemoryBitStream62();
+		~OutputMemoryBitStream62();
+
+		[[nodiscard]] inline const byte* GetBufferPtr() const noexcept { return mBuffer; }
+		[[nodiscard]] inline uint32_t GetBitLength() const noexcept { return mBitHead; }
+
+		template<is_primitive_type T, uint32_t InBitCount = sizeof(T) << 3>
+		void Write(const T& inData);
+
+	private:
+		[[nodiscard]] inline void* GetNextFreeByte() const noexcept { return mBuffer + ((mBitHead + 7) >> 3); }
+		// Returns the minimum type size for containing the inserted data
+		static constexpr uint8_t GetMinTypeSize(const uint16_t inBytes) noexcept;
+
+		void ReallocBuffer(const uint32_t inNewBitLength);
+
+		template <is_unsigned_arithmetic_type T>
+		void BitAlignment();
+
+		void WriteFreeBits(const uint8_t occupiedBits);
+
+		byte* mBuffer;
+		uint32_t mBitHead;
+		uint32_t mBitCapacity;
+
+		static constexpr uint8_t InDataMaxByteSize = 8;
+		static constexpr std::endian mEndian{std::endian::little};
+	};
+
+
+	template<is_primitive_type T, uint32_t InBitCount>
+	inline void OutputMemoryBitStream62::Write(const T& inData)
+	{
+		static_assert(InBitCount <= (sizeof(inData) << 3));
+
+		constexpr uint16_t byteSize = (InBitCount + 7) >> 3;
+
+		if constexpr (std::endian::native == mEndian)
+		{
+			std::memcpy(GetNextFreeByte(), &inData, byteSize);
+		}
+		else
+		{
+			auto invertedData = Serialization::ByteSwap(inData);
+			std::memcpy(GetNextFreeByte(), &invertedData, byteSize);
+		}
+
+		BitAlignment<typename HeadAlignment<GetMinTypeSize(byteSize)>::type>();
+		mBitHead += InBitCount;
+
+		if (mBitHead > mBitCapacity) [[unlikely]]	// safe for primitive types, since mBuffer has an extra 8 bytes passed mBitCapacity
+		{
+			ReallocBuffer(mBitCapacity * 2);
+		}
+	}
+
+	template<is_unsigned_arithmetic_type T>
+	inline void OutputMemoryBitStream62::BitAlignment()
+	{
+		const uint8_t occupiedBits = mBitHead & 0x7;
+		if (occupiedBits > 0)
+		{
+			// Align to byte
+			WriteFreeBits(occupiedBits);
+			const uint8_t freeBits = 8 - occupiedBits;
+			*reinterpret_cast<T*>(GetNextFreeByte()) >>= freeBits;	// Fix alignment
+		}
+	}
+
+	constexpr uint8_t OutputMemoryBitStream62::GetMinTypeSize(const uint16_t inBytes) noexcept
+	{
+		if (inBytes == 1)
+		{
+			return 1;
+		}
+		else if (inBytes == 2)
+		{
+			return 2;
+		}
+		else if (inBytes <= 4)
+		{
+			return 4;
+		}
+		else
+		{
+			return 8;
+		}
+	}
+#pragma endregion //v6.2
 }}
 
 

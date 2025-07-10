@@ -111,8 +111,8 @@ void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
 #define SERIALIZE_VALUES				\
 	stream.Write<bool, 1>(dummyB);		\
 	stream.Write<bool>(dummyB);			\
-	stream.Write(dummyVal32);			\
-	stream.Write(dummyVal64);			
+	stream.Write<uint32_t, 17>(dummyVal32);			\
+	stream.Write<uint64_t, 30>(dummyVal64);			
 
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream)
 {
@@ -145,6 +145,11 @@ void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream6& stream
 }
 
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream61& stream)
+{
+	SERIALIZE_VALUES
+}
+
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream62& stream)
 {
 	SERIALIZE_VALUES
 }
