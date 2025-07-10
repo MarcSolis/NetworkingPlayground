@@ -7,26 +7,22 @@ namespace profiler
 {
 	Timer::Timer(const bool maxResolution) : maxResolution(maxResolution)
 	{
-		startTimePoint = std::chrono::high_resolution_clock::now();
+		const startTimePoint = std::chrono::high_resolution_clock::now();
 	}
 
 	void Timer::Stop()
 	{
-		auto endTimePoint = std::chrono::high_resolution_clock::now();
-
-		auto start = std::chrono::time_point_cast<std::chrono::microseconds>(startTimePoint).time_since_epoch().count();
-		auto end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimePoint).time_since_epoch().count();
-
-		auto duration = end - start;
+		const auto endTimePoint = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::micro> duration = endTimePoint - startTimePoint; // end - start;
 
 		if (maxResolution)
 		{
-			std::cout << duration << "\xE6" << std::endl;
+			std::cout << duration.count() << "us" << std::endl;
 		}
 		else
 		{
 			duration /= 1000;
-			std::cout << duration << "ms" << std::endl;
+			std::cout << duration.count() << "ms" << std::endl;
 		}
 	}
 
