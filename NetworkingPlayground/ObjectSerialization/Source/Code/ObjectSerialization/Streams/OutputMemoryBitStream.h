@@ -1,150 +1,107 @@
 #pragma once
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/ByteSwapper.h"
-#include "ObjectSerialization/Streams/Int2Type.h"
 
-#include <cstdint>
-#include <bit>
-#include <cassert>
-#include <algorithm>
+#include <cstring>
+#include <memory>
+
 
 
 namespace Serialization { namespace Stream {
 
+	/// <summary>
+	/// Fill current byte free bits, then create a tmp with the shifted InData and load it to the buffer.
+	/// 
+	/// PROS:
+	///		If buffer is byte-aligned, no shifting needed.
+	///		Compatibility and performance due to memory alignment.
+	/// CONS: 
+	///		Extra temp for ensuring memory accesses are aligned.
+	/// </summary>
 	class OutputMemoryBitStream
 	{
+		typedef unsigned char byte;
+
 	public:
 		OutputMemoryBitStream();
 		~OutputMemoryBitStream();
 
-		inline const char* GetBufferPtr() const noexcept { return mBuffer; }
+		inline const byte* GetBufferPtr() const noexcept { return mBuffer; }
 		inline uint32_t GetBitLength() const noexcept { return mBitHead; }
-		inline uint32_t GetByteLength() const noexcept { return (mBitHead + 7) >> 3; }
 
 
-		template <is_primitive_type T>
-		void Write(T inData, size_t inBitCount = sizeof(T) << 3);
-
-		template<is_primitive_type T, size_t InBitCount = sizeof(T) << 3>
-		void WriteAlt(T inData);
-
-		template <is_primitive_type T, size_t N>
-		void Write(T(&inData)[N]);
+		template<is_primitive_type T, uint32_t InBitCount = sizeof(T) << 3>
+		void Write(const T& inData);
 
 	private:
-		void WriteBitsInternal(uint8_t inData, size_t inBitCount);
-		void WriteBits(const void* inData, size_t inBitCount);
+		inline uint32_t GetNextFreeByte() const noexcept { return (mBitHead + 7) >> 3; }
 		void ReallocBuffer(uint32_t inNewBitLength);
 
-		template <is_primitive_type T>
-		void WriteInternal(T inData, size_t inBitCount, Int2Type<true>);	// Less than a byte
-		template <is_primitive_type T>
-		void WriteInternal(T inData, size_t inBitCount, Int2Type<false>);	// Byte or more
+		byte WriteFreeBits(const byte* const inData, const byte inBitCount);
+		byte FillFreeBitsLeft(const byte* const inData);	// WriteFreeBits specialization
 
-		void WriteFreeBits(uint8_t inData, size_t inBitCount);
-		void WriteBytesInternal(const void* inData, size_t inBitCount);
-
-		char* mBuffer;
+		byte* mBuffer;
 		uint32_t mBitHead;
 		uint32_t mBitCapacity;
-		static constexpr std::endian mEndian{std::endian::little};
+
+		static constexpr uint32_t InitialBufferBitSize{256 * 8};
+		static constexpr uint8_t InDataMaxByteSize{8}; // Max type byte size supported
+		static constexpr std::endian Endian{std::endian::little};
 	};
 
-	template<is_primitive_type T>
-	inline void OutputMemoryBitStream::Write(T inData, size_t inBitCount)
+	template<is_primitive_type T, uint32_t InBitCount>
+	inline void OutputMemoryBitStream::Write(const T& inData)
 	{
-		assert(inBitCount <= (sizeof(inData) << 3));
+		static_assert(InBitCount <= (sizeof(inData) << 3), "More bits requested than type provides!");
+		static_assert(sizeof(inData) <= InDataMaxByteSize, "Unsupported type, maximum type size exceeded");
 
-		if constexpr (std::endian::native == mEndian)
-		{
-			WriteBits(&inData, inBitCount);
-		}
-		else
-		{
-			T swappedData{Serialization::ByteSwap(inData)};
-			WriteBits(&swappedData, inBitCount);
-		}
-	}
+		constexpr uint32_t InByteCount = (InBitCount + 7) >> 3;
 
-	template<is_primitive_type T, size_t N>
-	inline void OutputMemoryBitStream::Write(T(&inData)[N])
-	{
-		if constexpr (std::endian::native == mEndian)
+		if constexpr (Endian == std::endian::native)
 		{
-			WriteBits(&inData, sizeof(inData) << 3);
-		}
-		else
-		{
-			T swappedData[N];
-			for (size_t i = 0; i < N; ++i)
+			if (mBitHead & 0x7)	// byte-unaligned
 			{
-				swappedData[i] = Serialization::ByteSwap(inData[i]);
+				if constexpr (InBitCount < 8) // Is less than a byte
+				{
+					const byte addedBits = WriteFreeBits(reinterpret_cast<const byte*>(&inData), InBitCount);
+					auto shiftedData = inData >> addedBits;
+					std::memcpy(mBuffer + GetNextFreeByte(), &shiftedData, InByteCount);
+				}
+				else
+				{
+					const byte addedBits = FillFreeBitsLeft(reinterpret_cast<const byte*>(&inData));
+					auto shiftedData = inData >> addedBits;
+					std::memcpy(mBuffer + GetNextFreeByte(), &shiftedData, InByteCount);
+				}
 			}
-
-			WriteBits(&swappedData, sizeof(swappedData) << 3);
-		}
-	}
-
-	//At least one full byte. Extra memory needed for sure
-	template<is_primitive_type T>
-	inline void OutputMemoryBitStream::WriteInternal(T inData, size_t inBitCount, Int2Type<false>)
-	{
-		const uint32_t bitOffset = mBitHead & 0x7;
-		if (bitOffset > 0)
-		{
-			// Align to byte
-			uint32_t freeBits{8 - bitOffset};
-			WriteFreeBits(static_cast<uint8_t>(inData), freeBits);
-
-			inBitCount -= freeBits;
-			inData = inData >> freeBits;
-		}
-
-		// Load aligned
-		WriteBytesInternal(&inData, inBitCount);
-	}
-
-	template<is_primitive_type T>
-	inline void OutputMemoryBitStream::WriteInternal(T inData, size_t inBitCount, Int2Type<true>) 	//Less than a byte
-	{
-		uint32_t bitOffset = mBitHead & 0x7;
-		if (bitOffset > 0)
-		{
-			// Align to byte
-			uint32_t freeBits{8 - bitOffset};
-			if (inBitCount <= freeBits)
+			else // byte-aligned
 			{
-				WriteFreeBits(static_cast<uint8_t>(inData), inBitCount);
-				return;	// No extra bytes needed
+				std::memcpy(mBuffer + GetNextFreeByte(), &inData, InByteCount);
 			}
-
-			WriteFreeBits(static_cast<uint8_t>(inData), freeBits);
-			inBitCount -= freeBits;
-			inData = inData >> freeBits;
-		}
-
-		// Load aligned
-		WriteBytesInternal(&inData, inBitCount);
-	}
-
-	template<is_primitive_type T, size_t InBitCount>
-	inline void OutputMemoryBitStream::WriteAlt(T inData)
-	{
-		static_assert(InBitCount <= (sizeof(inData) << 3));
-
-		constexpr bool isLessThanByte{InBitCount < 8};
-
-		if constexpr (std::endian::native == mEndian)
-		{
-			WriteInternal(inData, InBitCount, Int2Type<isLessThanByte>());
 		}
 		else
 		{
-			T swappedData{Serialization::ByteSwap(inData)};
-			WriteInternal(swappedData, InBitCount, Int2Type<isLessThanByte>());
+			auto swappedData = Serialization::ByteSwap(inData);
+
+			if constexpr (InBitCount < 8) // Is less than a byte
+			{
+				const byte addedBits = WriteFreeBits(reinterpret_cast<const byte*>(&swappedData), InBitCount);
+				std::memcpy(mBuffer + GetNextFreeByte(), &(swappedData >>= addedBits), InByteCount);
+			}
+			else
+			{
+				const byte addedBits = FillFreeBitsLeft(reinterpret_cast<const byte*>(&swappedData));
+				std::memcpy(mBuffer + GetNextFreeByte(), &(swappedData >>= addedBits), InByteCount);
+			}
+		}
+
+		mBitHead += InBitCount;
+
+		if (mBitHead > mBitCapacity) [[unlikely]]
+		{
+			ReallocBuffer(mBitCapacity * 2);
 		}
 	}
-
 }}
 
 

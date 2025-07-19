@@ -1,6 +1,6 @@
 #pragma once
 #include "ObjectSerialization/ISerializableObject.h"
-#include "ObjectSerialization/Streams/OutputMemoryBitStream2.h"
+#include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
 
 #include <cstdint>
 #include <vector>
@@ -39,21 +39,14 @@ public:
 	RoboCat(int32_t health, int32_t meowCount) noexcept;
 
 	void SetName(const char* name, size_t length);
-	void CatchMices(std::vector<int32_t> miceIndices);
+	void CatchMice(std::vector<int32_t> miceIndices);
 
 	bool operator==(const RoboCat& other);
 	bool operator!=(const RoboCat& other);
 
-	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
+	virtual void Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& stream) override;
+
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream2& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream21& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream3& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream4& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream5& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream6& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream61& stream);
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream62& stream);
 
 
 protected:

@@ -2,7 +2,7 @@
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/Streams/OutputMemoryStream.h"
 #include "ObjectSerialization/Streams/InputMemoryStream.h"
-#include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
+#include "ObjectSerialization/Streams/DeprecatedOutputMemoryBitStream.h"
 #include "ObjectSerialization/ISerializableObject.h"
 #include "ObjectSerialization/RoboCat.h"
 
@@ -20,11 +20,6 @@ public:
 	template <typename ObjectTypeT>
 		requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
 	void SimulateBitStreamReplication(const ObjectTypeT* src, ObjectTypeT* dest);
-
-	template <typename ObjectTypeT>
-		requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
-	void SimulateBitStreamReplicationAlt(const ObjectTypeT* src, ObjectTypeT* dest);
-
 };
 
 template<typename ObjectTypeT>
@@ -47,7 +42,7 @@ template<typename ObjectTypeT>
 	requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
 inline void NetConnectionSimulator::SimulateBitStreamReplication(const ObjectTypeT* src, ObjectTypeT* dest)
 {
-	Serialization::Stream::OutputMemoryBitStream outputStream;
+	Serialization::Stream::DeprecatedOutputMemoryBitStream outputStream;
 	{
 		ObjectTypeT tempObj{*src};
 		static_cast<Serialization::ISerializableObject*>(&tempObj)->Serialize(outputStream);
@@ -59,18 +54,3 @@ inline void NetConnectionSimulator::SimulateBitStreamReplication(const ObjectTyp
 	//std::cout << "[OutputMemoryBitStream] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
 }
 
-template<typename ObjectTypeT>
-	requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
-inline void NetConnectionSimulator::SimulateBitStreamReplicationAlt(const ObjectTypeT* src, ObjectTypeT* dest)
-{
-	Serialization::Stream::OutputMemoryBitStream outputStream;
-	{
-		ObjectTypeT tempObj{*src};
-		static_cast<RoboCat*>(&tempObj)->SerializeAlt(outputStream);
-		memset(&tempObj, 0, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
-	}
-	//Serialization::Stream::InputMemoryBitStream inputStream(outputStream.GetBufferPtr(), outputStream.GetBitLength());
-	//static_cast<Serialization::ISerializableObject*>(dest)->Deserialize(inputStream);
-
-	//std::cout << "[OutputMemoryBitStreamAlt] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
-}
