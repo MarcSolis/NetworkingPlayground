@@ -8,21 +8,21 @@ function(GetDefaultCppSourceFileExtensions out_extensions)
 	set(${out_extensions} "*.c" "*.cpp" PARENT_SCOPE)
 endfunction()
 
-function(AppendCodeFilesRecursively out_header_files out_source_files top_dir relative_dirs)
+function(AppendCodeFilesRecursively out_header_files out_source_files top_dir relative_dirs exclude_main)
 	GetDefaultCppHeaderFileExtensions(AppendCodeFilesRecursively_HEADER_EXTENSIONS)
 	GetDefaultCppSourceFileExtensions(AppendCodeFilesRecursively_SOURCE_EXTENSIONS)
 
 	set(AppendCodeFilesRecursively_${out_header_files} ${${out_header_files}})
 	set(AppendCodeFilesRecursively_${out_source_files} ${${out_source_files}})
 
-	AppendFilesRecursively(AppendCodeFilesRecursively_${out_header_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_HEADER_EXTENSIONS}")
-	AppendFilesRecursively(AppendCodeFilesRecursively_${out_source_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_SOURCE_EXTENSIONS}")
+	AppendFilesRecursively(AppendCodeFilesRecursively_${out_header_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_HEADER_EXTENSIONS}" exclude_main)
+	AppendFilesRecursively(AppendCodeFilesRecursively_${out_source_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_SOURCE_EXTENSIONS}" exclude_main)
 
 	set(${out_header_files} ${AppendCodeFilesRecursively_${out_header_files}} PARENT_SCOPE)
 	set(${out_source_files} ${AppendCodeFilesRecursively_${out_source_files}} PARENT_SCOPE)
 endfunction()
 
-function(AppendFilesRecursively out_files top_dir relative_dirs extensions)
+function(AppendFilesRecursively out_files top_dir relative_dirs extensions exclude_main)
 	foreach (relative_dir ${relative_dirs})
 		set(AppendFilesRecursively_EXTENSIONS ${extensions})
 		list(TRANSFORM AppendFilesRecursively_EXTENSIONS PREPEND ${relative_dir}/)
@@ -43,7 +43,12 @@ function(AddIncludeDirectoriesToCurrentProject scope include_dirs)
 endfunction()
 
 function(AddLibraryToCurrentProject root_dir source_dir)
-	AppendCodeFilesRecursively(AddLibraryToCurrentProject_CODE_FILES AddLibraryToCurrentProject_CODE_FILES ${PROJECT_SOURCE_DIR} "${source_dir}")
+	AppendCodeFilesRecursively(AddLibraryToCurrentProject_CODE_FILES AddLibraryToCurrentProject_CODE_FILES ${PROJECT_SOURCE_DIR} "${source_dir}" FALSE)
+	AddExecutableToCurrentProject(${root_dir} "${AddLibraryToCurrentProject_CODE_FILES}" ${source_dir})
+endfunction()
+
+function(AddLibraryToCurrentTestProject root_dir source_dir)
+	AppendCodeFilesRecursively(AddLibraryToCurrentProject_CODE_FILES AddLibraryToCurrentProject_CODE_FILES ${PROJECT_SOURCE_DIR} "${source_dir}" TRUE)
 	AddExecutableToCurrentProject(${root_dir} "${AddLibraryToCurrentProject_CODE_FILES}" ${source_dir})
 endfunction()
 
@@ -69,4 +74,18 @@ endfunction()
 function(SetCompileOptionsGNU project_name)
 	set_target_properties(${MAIN_PROJECT_NAME} PROPERTIES CMAKE_XCODE_SCHEME_ADDRESS_SANITIZER ON)
 	add_compile_options(-Werror)	#Enable Warnings as errors
+endfunction()
+
+function(GetRepoBasePath full_path out_base_path)
+	set(result "")
+
+	while(NOT "${full_path}" STREQUAL "")
+	    get_filename_component(folder_name "${full_path}" NAME)
+	    if("${folder_name}" STREQUAL "MultiplayerGameProgramming")
+	        set(result "${full_path}")
+	        break()
+	    endif()
+	    get_filename_component(full_path "${full_path}" DIRECTORY)
+	endwhile()
+	set(${out_base_path} "${result}" PARENT_SCOPE)
 endfunction()
