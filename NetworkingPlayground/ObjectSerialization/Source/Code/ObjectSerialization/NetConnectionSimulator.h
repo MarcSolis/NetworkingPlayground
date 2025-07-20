@@ -2,8 +2,10 @@
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/Streams/OutputMemoryStream.h"
 #include "ObjectSerialization/Streams/InputMemoryStream.h"
-#include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
-#include "ISerializableObject.h"
+#include "ObjectSerialization/Streams/DeprecatedOutputMemoryBitStream.h"
+#include "ObjectSerialization/ISerializableObject.h"
+#include "ObjectSerialization/RoboCat.h"
+
 #include <iostream>
 
 
@@ -18,7 +20,6 @@ public:
 	template <typename ObjectTypeT>
 		requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
 	void SimulateBitStreamReplication(const ObjectTypeT* src, ObjectTypeT* dest);
-
 };
 
 template<typename ObjectTypeT>
@@ -41,7 +42,7 @@ template<typename ObjectTypeT>
 	requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
 inline void NetConnectionSimulator::SimulateBitStreamReplication(const ObjectTypeT* src, ObjectTypeT* dest)
 {
-	Serialization::Stream::OutputMemoryBitStream outputStream;
+	Serialization::Stream::DeprecatedOutputMemoryBitStream outputStream;
 	{
 		ObjectTypeT tempObj{*src};
 		static_cast<Serialization::ISerializableObject*>(&tempObj)->Serialize(outputStream);
@@ -50,5 +51,6 @@ inline void NetConnectionSimulator::SimulateBitStreamReplication(const ObjectTyp
 	//Serialization::Stream::InputMemoryBitStream inputStream(outputStream.GetBufferPtr(), outputStream.GetBitLength());
 	//static_cast<Serialization::ISerializableObject*>(dest)->Deserialize(inputStream);
 
-	std::cout << "[OutputMemoryBitStream] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
+	//std::cout << "[OutputMemoryBitStream] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
 }
+

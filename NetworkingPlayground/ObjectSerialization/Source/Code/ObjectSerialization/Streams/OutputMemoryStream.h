@@ -1,6 +1,7 @@
 #pragma once
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/ByteSwapper.h"
+
 #include <cstdint>
 #include <bit>
 

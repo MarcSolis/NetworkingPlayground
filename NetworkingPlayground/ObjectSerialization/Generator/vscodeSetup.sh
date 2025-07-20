@@ -4,37 +4,43 @@
 scriptDir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Define the root directory as the parent of the script directory (root)
-rootDir="$(dirname "$scriptDir")"
+absoluteRootPath="$(dirname "$scriptDir")"
 
-# Check if rootDir/.vscode exists
-if [ ! -d "${rootDir}/.vscode" ]; then
-    echo "❌ ${rootDir}/.vscode folder does not exist. Terminating."
+# Get the name of the parent folder
+rootFolder="$(basename "$absoluteRootPath")"
+
+# Check if absoluteRootPath/.vscode exists
+if [ ! -d "${absoluteRootPath}/.vscode" ]; then
+    echo "❌ ${rootFolder}/.vscode folder does not exist. Terminating."
     exit 1
 fi
 
 echo "Generating files..."
 
 # Write debugCompiler.sh
-cat << EOF > ${rootDir}/.vscode/debugCompiler.sh
+cat << EOF > ${absoluteRootPath}/.vscode/debugCompiler.sh
 #!/bin/bash
 g++-13 -fdiagnostics-color=always -g -std=c++20 \\
     \$(find ./Source/Code -name '*.cpp') \\
     -I./Source/Code \\
-    -o ./Source/Code/${rootDir}/main
+    -o ./Solution/Debug${rootFolder}
 EOF
 
-chmod +x ${rootDir}/.vscode/debugCompiler.sh
+chmod +x ${absoluteRootPath}/.vscode/debugCompiler.sh
 echo "✅ debugCompiler.sh has been created"
 
 # Write tasks.json
-cat << 'EOF' > ${rootDir}/.vscode/tasks.json
+cat << 'EOF' > ${absoluteRootPath}/.vscode/tasks.json
 {
     "tasks": [
         {
             "type": "shell",
             "label": "C/C++: g++-13 build project",
-            "command": "${workspaceFolder}/.vscode/debugCompiler.sh",
-            "args": [],
+            "command": "bash",
+            "args": [
+                "-c",
+                "clear && ${workspaceFolder}/.vscode/debugCompiler.sh"
+            ],
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -55,7 +61,7 @@ EOF
 echo "✅ tasks.json has been created"
 
 # Write launch.json
-cat << EOF > ${rootDir}/.vscode/launch.json
+cat << EOF > ${absoluteRootPath}/.vscode/launch.json
 {
     // Use IntelliSense to learn about possible attributes.
     // Hover to view descriptions of existing attributes.
@@ -66,10 +72,10 @@ cat << EOF > ${rootDir}/.vscode/launch.json
             "name": "Debug project with g++-13",
             "type": "cppdbg",
             "request": "launch",
-            "program": "\${workspaceFolder}/Source/Code/${rootDir}/main",
+            "program": "\${workspaceFolder}/Solution/Debug${rootFolder}",
             "args": [],
             "stopAtEntry": false,
-            "cwd": "\${workspaceFolder}/Source/Code/${rootDir}",
+            "cwd": "\${workspaceFolder}/Source/Code/${rootFolder}",
             "environment": [],
             "externalConsole": false,
             "MIMode": "gdb",
@@ -88,8 +94,5 @@ EOF
 
 echo "✅ launch.json has been created"
 
-# Get the name of the parent folder
-parentFolderName="$(basename "$rootDir")"
-
-echo "Files saved in ${parentFolderName}/.vscode."
+echo "Files saved in ${rootFolder}/.vscode."
 echo "Process completed!"

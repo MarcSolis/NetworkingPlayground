@@ -1,13 +1,18 @@
-#include "RoboCat.h"
-#include "Streams/OutputMemoryStream.h"
-#include "Streams/InputMemoryStream.h"
-#include "Streams/OutputMemoryBitStream.h"
+#include "ObjectSerialization/RoboCat.h"
+#include "ObjectSerialization/Streams/OutputMemoryStream.h"
+#include "ObjectSerialization/Streams/InputMemoryStream.h"
+#include "ObjectSerialization/Streams/DeprecatedOutputMemoryBitStream.h"
+
 #include <cstring>
 #include <cassert>
+#include <cstdlib>
+#include <limits>
 
 #pragma region NaiveRoboCat
 NaiveRoboCat::NaiveRoboCat() : mHealth(10), mMeowCount(3) 
 {
+	mHealth = rand();
+	mMeowCount = rand();
 }
 
 
@@ -28,11 +33,15 @@ bool NaiveRoboCat::operator!=(const NaiveRoboCat& other)
 #pragma endregion // Naive
 
 
-RoboCat::RoboCat() : mHealth(10), mMeowCount(3)
+RoboCat::RoboCat() noexcept : mHealth(10), mMeowCount(3)
 {
+	dummyB = std::rand() % 2;
+	dummyVal64 = std::rand() * 10;
+	dummyVal32 = std::rand();
+	dummyVal16 = rand() % std::numeric_limits<uint16_t>::max() + 1;
 }
 
-RoboCat::RoboCat(int32_t health, int32_t meowCount) : mHealth(health), mMeowCount(meowCount)
+RoboCat::RoboCat(int32_t health, int32_t meowCount) noexcept : mHealth(health), mMeowCount(meowCount)
 {
 }
 
@@ -44,7 +53,7 @@ void RoboCat::SetName(const char* name, size_t length)
 	std::memcpy(mName, name, length);
 }
 
-void RoboCat::CatchMices(std::vector<int32_t> miceIndices)
+void RoboCat::CatchMice(std::vector<int32_t> miceIndices)
 {
 	mMiceIndices = miceIndices;
 }
@@ -76,11 +85,37 @@ void RoboCat::Deserialize(Serialization::Stream::InputMemoryStream& stream)
 	//no solution for mMiceIndices yet 
 }
 
-void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
+void RoboCat::Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& stream)
 {
-	stream.Write(mHealth, 8);
-	stream.Write(mMeowCount, 16);
-	stream.Write(mName);
+	stream.Write(dummyB, 1);
+	stream.Write(dummyVal32);
+	stream.Write(dummyVal64);
+
+	/*
+	stream.Write(mHealth, 32);
+	stream.Write(mMeowCount, 32);
+	*/
+	//stream.Write(mName);
 	//no solution for mMiceIndices yet 
 }
 
+
+#if 1
+#define SERIALIZE_VALUES					\
+	stream.Write<bool, 1>(dummyB);			\
+	stream.Write<bool>(dummyB);				\
+	stream.Write<uint32_t, 15>(dummyVal32);	\
+	stream.Write<uint64_t, 30>(dummyVal64);	
+#else
+#define SERIALIZE_VALUES				\
+	stream.Write<bool>(dummyB);			\
+	stream.Write<bool>(dummyB);			\
+	stream.Write<uint32_t>(dummyVal32);	\
+	stream.Write<uint64_t>(dummyVal64);			
+#endif
+
+
+void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
+{
+	SERIALIZE_VALUES
+}
