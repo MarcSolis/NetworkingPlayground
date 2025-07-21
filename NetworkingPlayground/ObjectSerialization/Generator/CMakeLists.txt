@@ -26,8 +26,14 @@ if(TEST)
 	set(GOOGLETEST_SOURCE_DIR "${REPO_DIR}/External/GoogleTest")
 	set(GOOGLETEST_BINARY_DIR "${CMAKE_BINARY_DIR}/external/GoogleTest-build")
 
+	if (MSVC)
+	  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")  # /MD
+	  # Use MultiThreadedDebugDLL for Debug config
+	endif()
+
 	#Generate GoogleTest Project
 	project(${BUILDING_PROJECT_NAME})
+	set(gtest_force_shared_crt on)
 	add_subdirectory(${GOOGLETEST_SOURCE_DIR} ${GOOGLETEST_BINARY_DIR})
 	AddLibraryToCurrentTestProject(${ROOT_DIR} "${SOURCE_DIR}")
 	SetLibraryCppStandard(${BUILDING_PROJECT_NAME} 20)

@@ -15,8 +15,8 @@ function(AppendCodeFilesRecursively out_header_files out_source_files top_dir re
 	set(AppendCodeFilesRecursively_${out_header_files} ${${out_header_files}})
 	set(AppendCodeFilesRecursively_${out_source_files} ${${out_source_files}})
 
-	AppendFilesRecursively(AppendCodeFilesRecursively_${out_header_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_HEADER_EXTENSIONS}" exclude_main)
-	AppendFilesRecursively(AppendCodeFilesRecursively_${out_source_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_SOURCE_EXTENSIONS}" exclude_main)
+	AppendFilesRecursively(AppendCodeFilesRecursively_${out_header_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_HEADER_EXTENSIONS}" ${exclude_main})
+	AppendFilesRecursively(AppendCodeFilesRecursively_${out_source_files} ${top_dir} "${relative_dirs}" "${AppendCodeFilesRecursively_SOURCE_EXTENSIONS}" ${exclude_main})
 
 	set(${out_header_files} ${AppendCodeFilesRecursively_${out_header_files}} PARENT_SCOPE)
 	set(${out_source_files} ${AppendCodeFilesRecursively_${out_source_files}} PARENT_SCOPE)
@@ -28,7 +28,21 @@ function(AppendFilesRecursively out_files top_dir relative_dirs extensions exclu
 		list(TRANSFORM AppendFilesRecursively_EXTENSIONS PREPEND ${relative_dir}/)
 
 		file(GLOB_RECURSE AppendFilesRecursively_FILES RELATIVE ${top_dir} ${AppendFilesRecursively_EXTENSIONS})
-		set(AppendFilesRecursively_${out_files} ${AppendFilesRecursively_${out_files}} ${AppendFilesRecursively_FILES})
+
+		if(${exclude_main})
+			set(filtered_files "")
+			foreach(file ${AppendFilesRecursively_FILES})
+				string(TOLOWER "${file}" file_lower)
+				if(NOT file_lower MATCHES "^.*main\\.cpp$")
+					list(APPEND filtered_files "${file}")
+				endif()
+			endforeach()
+
+			set(AppendFilesRecursively_${out_files} ${AppendFilesRecursively_${out_files}} ${filtered_files})
+		else()
+			set(AppendFilesRecursively_${out_files} ${AppendFilesRecursively_${out_files}} ${AppendFilesRecursively_FILES})
+		endif()
+
     endforeach ()
 	
 	set(AppendFilesRecursively_${out_files} ${${out_files}} ${AppendFilesRecursively_${out_files}})
@@ -49,7 +63,10 @@ endfunction()
 
 function(AddLibraryToCurrentTestProject root_dir source_dir)
 	AppendCodeFilesRecursively(AddLibraryToCurrentProject_CODE_FILES AddLibraryToCurrentProject_CODE_FILES ${PROJECT_SOURCE_DIR} "${source_dir}" TRUE)
-	AddExecutableToCurrentProject(${root_dir} "${AddLibraryToCurrentProject_CODE_FILES}" ${source_dir})
+	set(include_dirs "${source_dir}/Code" "${source_dir}")
+	AddExecutableToCurrentProject(${root_dir} "${AddLibraryToCurrentProject_CODE_FILES}" ${include_dirs})
+	target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest_main GTest::gmock)
+	include(GoogleTest)
 endfunction()
 
 function(AddExecutableToCurrentProject root_dir code_files public_include_dirs)
