@@ -101,11 +101,11 @@ void RoboCat::Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& 
 
 
 #if 1
-#define SERIALIZE_VALUES					\
-	stream.Write<bool, 1>(dummyB);			\
-	stream.Write<bool>(dummyB);				\
-	stream.Write<uint32_t, 15>(dummyVal32);	\
-	stream.Write<uint64_t, 30>(dummyVal64);	
+#define SERIALIZE_VALUES				\
+	stream.Write<1>(dummyB);			\
+	stream.Write(dummyB);				\
+	stream.Write<15>(dummyVal32);		\
+	stream.Write<30>(dummyVal64);	
 #else
 #define SERIALIZE_VALUES				\
 	stream.Write<bool>(dummyB);			\
@@ -116,6 +116,11 @@ void RoboCat::Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& 
 
 
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
+{
+	SERIALIZE_VALUES
+}
+
+void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
 {
 	SERIALIZE_VALUES
 }

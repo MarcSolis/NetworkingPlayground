@@ -5,6 +5,7 @@
 #include <cstring>
 #include <memory>
 
+#include <iostream>
 
 
 namespace Serialization { namespace Stream {
@@ -35,8 +36,12 @@ namespace Serialization { namespace Stream {
 		inline uint32_t GetBitLength() const noexcept { return mBitHead; }
 
 
+		template<uint32_t InBitCount, is_primitive_type T>
+		void Write(const T& inData);
+
 		template<is_primitive_type T, uint32_t InBitCount = sizeof(T) << 3>
 		void Write(const T& inData);
+
 
 	private:
 		inline uint32_t GetNextFreeByte() const noexcept { return (mBitHead + 7) >> 3; }
@@ -53,6 +58,12 @@ namespace Serialization { namespace Stream {
 		static constexpr uint8_t InDataMaxByteSize{8}; // Max type byte size supported
 		static constexpr std::endian Endian{std::endian::little};
 	};
+
+	template<uint32_t InBitCount, is_primitive_type T>
+	inline void OutputMemoryBitStream::Write(const T& inData)
+	{
+		Write<T, InBitCount>(inData);
+	}
 
 	template<is_primitive_type T, uint32_t InBitCount>
 	inline void OutputMemoryBitStream::Write(const T& inData)

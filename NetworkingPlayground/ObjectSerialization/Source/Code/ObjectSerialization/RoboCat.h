@@ -54,7 +54,7 @@ protected:
 	virtual void Serialize(Serialization::Stream::OutputMemoryStream& stream) override;
 	virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
 
-	//virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
+	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
 	//virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
 
 	
