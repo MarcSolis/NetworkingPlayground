@@ -52,7 +52,7 @@ endfunction()
 
 function(AddIncludeDirectoriesToCurrentProject scope include_dirs)
 	foreach (include_dir ${include_dirs})
-		target_include_directories(${PROJECT_NAME} ${scope} ${include_dir})
+		target_include_directories(${PROJECT_NAME} ${scope} "${include_dir}")
     endforeach ()
 endfunction()
 
@@ -64,16 +64,15 @@ endfunction()
 function(AddLibraryToCurrentTestProject root_dir source_dir)
 	AppendCodeFilesRecursively(AddLibraryToCurrentProject_CODE_FILES AddLibraryToCurrentProject_CODE_FILES ${PROJECT_SOURCE_DIR} "${source_dir}" TRUE)
 	set(include_dirs "${source_dir}/Code" "${source_dir}")
-	AddExecutableToCurrentProject(${root_dir} "${AddLibraryToCurrentProject_CODE_FILES}" ${include_dirs})
+	AddExecutableToCurrentProject(${root_dir} "${AddLibraryToCurrentProject_CODE_FILES}" "${include_dirs}")
 	target_link_libraries(${PROJECT_NAME} PRIVATE GTest::gtest_main GTest::gmock)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE USING_GTEST)
 	include(GoogleTest)
 endfunction()
 
 function(AddExecutableToCurrentProject root_dir code_files public_include_dirs)
 	source_group(TREE ${root_dir} FILES ${code_files})
-
 	add_executable(${PROJECT_NAME} ${code_files})
-
 	AddIncludeDirectoriesToCurrentProject(PUBLIC "${public_include_dirs}")
 endfunction()
 
