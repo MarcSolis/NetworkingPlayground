@@ -24,6 +24,11 @@ namespace Serialization { namespace Stream {
 
 	public:
 		OutputMemoryBitStream();
+
+		OutputMemoryBitStream(const OutputMemoryBitStream& other) = delete;
+		OutputMemoryBitStream(OutputMemoryBitStream&& other) noexcept;
+		OutputMemoryBitStream& operator=(const OutputMemoryBitStream& other) = delete;
+		OutputMemoryBitStream& operator=(OutputMemoryBitStream&& other) noexcept;
 		~OutputMemoryBitStream();
 
 		inline const byte* GetBufferPtr() const noexcept { return mBuffer; }
@@ -61,7 +66,7 @@ namespace Serialization { namespace Stream {
 		{
 			if (mBitHead & 0x7)	// byte-unaligned
 			{
-				if constexpr (InBitCount < 8) // Is less than a byte
+				if constexpr (InBitCount < 8) // less than a byte
 				{
 					const byte addedBits = WriteFreeBits(reinterpret_cast<const byte*>(&inData), InBitCount);
 					auto shiftedData = inData >> addedBits;
@@ -83,7 +88,7 @@ namespace Serialization { namespace Stream {
 		{
 			auto swappedData = Serialization::ByteSwap(inData);
 
-			if constexpr (InBitCount < 8) // Is less than a byte
+			if constexpr (InBitCount < 8) // less than a byte
 			{
 				const byte addedBits = WriteFreeBits(reinterpret_cast<const byte*>(&swappedData), InBitCount);
 				std::memcpy(mBuffer + GetNextFreeByte(), &(swappedData >>= addedBits), InByteCount);
