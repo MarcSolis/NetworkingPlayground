@@ -2,6 +2,8 @@
 #include "ObjectSerialization/Streams/StreamTypes.h"
 #include "ObjectSerialization/ByteSwapper.h"
 
+#include "ObjectSerialization/Config/Testable.h"
+
 #include <cstdint>
 #include <bit>
 
@@ -10,11 +12,13 @@ namespace Serialization { namespace Stream {
 
 	class OutputMemoryStream
 	{
+		GENERATE_TEST_EXTENSION(OutputMemoryStream)
+
 	public:
 		OutputMemoryStream();
 		~OutputMemoryStream();
 
-		const char* GetBufferPtr() const { return mBuffer; }
+		const char* GetBufferPtr() const noexcept { return mBuffer; }
 		uint32_t GetLength() const noexcept { return mHead; }
 
 		template <is_primitive_type T>

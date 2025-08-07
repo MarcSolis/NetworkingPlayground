@@ -8,6 +8,8 @@ namespace Serialization {
 
 		class DeprecatedOutputMemoryBitStream;
 		//class InputMemoryBitStream;
+
+		class OutputMemoryBitStream;
 	}
 
 
@@ -19,6 +21,8 @@ namespace Serialization {
 
 		virtual void Serialize(Stream::DeprecatedOutputMemoryBitStream& stream) = 0;
 		//virtual void Deserialize(Stream::InputMemoryBitStream& stream) = 0;
+
+		virtual void Serialize(Stream::OutputMemoryBitStream& stream) = 0;
 
 		virtual ~ISerializableObject() = default;
 	};
