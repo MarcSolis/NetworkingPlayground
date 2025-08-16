@@ -1,6 +1,6 @@
 #include "ObjectSerialization/RoboCat.h"
 #include "ObjectSerialization/NaivelySerialization.h"
-#include "ObjectSerialization/NetConnectionSimulator.h"
+#include "ObjectSerialization/Simulators/NetConnectionSimulator.h"
 #include "ObjectSerialization/ByteSwapper.h"
 
 #include "Tools/Profiler/Timer.h"
@@ -42,7 +42,7 @@ static void NaiveSerializationTest2()
 
 static void StreamSerializationTest()
 {
-	NetConnectionSimulator connectionSimulator;
+	Simulator::NetConnectionSimulator connectionSimulator;
 
 	RoboCat originalRC(5, 1);
 	const char name[]{"Abel"};
@@ -52,16 +52,33 @@ static void StreamSerializationTest()
 
 	assert(originalRC != copyRC);
 
-	connectionSimulator.SimulateStreamReplication(&originalRC, &copyRC);
+	connectionSimulator.SimulateByteStreamReplication(&originalRC, &copyRC);
 
 	assert(originalRC == copyRC);
 }
 
-static void StreamBitSerializationTest()
+static void DeprecatedStreamBitSerializationTest()
 {
-	NetConnectionSimulator connectionSimulator;
+	Simulator::NetConnectionSimulator connectionSimulator;
 
 	RoboCat originalRC(5, 1);
+	const char name[]{"Abel"};
+	originalRC.SetName(name, sizeof(name));
+
+	RoboCat copyRC;
+
+	assert(originalRC != copyRC);
+
+	connectionSimulator.SimulateDeprecatedBitStreamReplication(&originalRC, &copyRC);
+
+	assert(originalRC.NetEqual(copyRC));
+}
+
+static void StreamBitSerializationTest()
+{
+	Simulator::NetConnectionSimulator connectionSimulator;
+
+	RoboCat originalRC;
 	const char name[]{"Abel"};
 	originalRC.SetName(name, sizeof(name));
 
@@ -71,7 +88,7 @@ static void StreamBitSerializationTest()
 
 	connectionSimulator.SimulateBitStreamReplication(&originalRC, &copyRC);
 
-	//assert(originalRC == copyRC);
+	assert(originalRC.NetEqual(copyRC));
 }
 
 static void StreamBitSerializationPerfTest(std::vector<RoboCat>& roboCats)
@@ -94,8 +111,11 @@ int main(int argc, char** argv)
 {
 	//NaiveSerializationTest();
 	//StreamSerializationTest();
-	//StreamBitSerializationTest();
-	//StreamBitSerializationTestAlt();
+	DeprecatedStreamBitSerializationTest();
+	StreamBitSerializationTest();
+
+
+	return 0;
 
 	Serialization::Stream::DeprecatedOutputMemoryBitStream outputStream;
 	Serialization::Stream::OutputMemoryBitStream outputStream52;

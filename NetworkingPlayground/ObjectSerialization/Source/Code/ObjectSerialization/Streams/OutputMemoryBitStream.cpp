@@ -14,8 +14,10 @@ namespace Serialization { namespace Stream {
 	}
 
 	OutputMemoryBitStream::OutputMemoryBitStream(OutputMemoryBitStream&& other) noexcept : 
-		mBuffer(std::move(other.mBuffer)), mBitHead(std::move(other.mBitHead)), mBitCapacity(std::move(other.mBitCapacity))
+		mBuffer(nullptr), mBitHead(std::move(other.mBitHead)), mBitCapacity(std::move(other.mBitCapacity))
 	{
+		using std::swap;
+		swap(mBuffer, other.mBuffer);
 	}
 
 	OutputMemoryBitStream& OutputMemoryBitStream::operator=(OutputMemoryBitStream&& other) noexcept
@@ -36,7 +38,7 @@ namespace Serialization { namespace Stream {
 	void OutputMemoryBitStream::ReallocBuffer(uint32_t inNewBitLength)
 	{
 		const uint32_t newByteSize = (inNewBitLength + 7) >> 3;
-		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + InDataMaxByteSize))
+		if (auto reallocated = std::realloc(mBuffer, static_cast<size_t>(newByteSize) + MaxDataTypeByteSize))
 		{
 			mBuffer = static_cast<byte*>(reallocated);
 			mBitCapacity = newByteSize << 3;
@@ -45,7 +47,7 @@ namespace Serialization { namespace Stream {
 		//handle realloc failure 
 	}
 
-	OutputMemoryBitStream::byte OutputMemoryBitStream::FillFreeBitsLeft(const byte* const inData)	//More than a byte
+	byte OutputMemoryBitStream::FillFreeBitsLeft(const byte* const inData)	//More than a byte
 	{
 		const uint32_t byteOffset = mBitHead >> 3;
 		const byte bitOffset = mBitHead & 0x7;
@@ -59,7 +61,7 @@ namespace Serialization { namespace Stream {
 		return (8 - bitOffset) & 0x7;	// Added bits (all available bits)
 	}
 
-	OutputMemoryBitStream::byte OutputMemoryBitStream::WriteFreeBits(const byte* const inData, const byte inBitCount)
+	byte OutputMemoryBitStream::WriteFreeBits(const byte* const inData, const byte inBitCount)
 	{
 		const uint32_t byteOffset = mBitHead >> 3;
 		const byte bitOffset = mBitHead & 0x7;

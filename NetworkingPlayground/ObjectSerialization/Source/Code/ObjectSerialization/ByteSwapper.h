@@ -7,6 +7,9 @@
 
 namespace Serialization {
 
+	static constexpr uint8_t MaxDataTypeByteSize{8};	// Max type size (bytes) supported by the ByteSwapper
+
+
 	constexpr inline uint16_t ByteSwap2(uint16_t inData) noexcept
 	{
 		return (inData >> 8) | (inData << 8);
@@ -41,7 +44,7 @@ namespace Serialization {
 	class ByteSwapper<T, 1>
 	{
 	public:
-		T Swap(const T inData) const noexcept
+		inline constexpr T Swap(const T inData) const noexcept
 		{
 			return inData;
 		}

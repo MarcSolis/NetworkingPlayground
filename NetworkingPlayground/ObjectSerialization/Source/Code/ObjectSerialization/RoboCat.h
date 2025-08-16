@@ -1,6 +1,5 @@
 #pragma once
 #include "ObjectSerialization/ISerializableObject.h"
-#include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
 
 #include <cstdint>
 #include <vector>
@@ -45,8 +44,11 @@ public:
 	bool operator!=(const RoboCat& other);
 
 	virtual void Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& stream) override;
+	virtual void Deserialize(Serialization::Stream::DeprecatedInputMemoryBitStream& stream) override;
 
 	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream);
+
+	bool NetEqual(const RoboCat& other) const noexcept;
 
 
 protected:
@@ -55,7 +57,7 @@ protected:
 	virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
 
 	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
-	//virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
+	virtual void Deserialize(Serialization::Stream::InputMemoryBitStream& stream) override;
 
 	
 

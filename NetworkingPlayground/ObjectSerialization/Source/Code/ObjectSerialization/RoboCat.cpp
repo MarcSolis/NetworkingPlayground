@@ -2,6 +2,9 @@
 #include "ObjectSerialization/Streams/OutputMemoryStream.h"
 #include "ObjectSerialization/Streams/InputMemoryStream.h"
 #include "ObjectSerialization/Streams/DeprecatedOutputMemoryBitStream.h"
+#include "ObjectSerialization/Streams/DeprecatedInputMemoryBitStream.h"
+#include "ObjectSerialization/Streams/OutputMemoryBitStream.h"
+#include "ObjectSerialization/Streams/InputMemoryBitStream.h"
 
 #include <cstring>
 #include <cassert>
@@ -36,8 +39,8 @@ bool NaiveRoboCat::operator!=(const NaiveRoboCat& other)
 RoboCat::RoboCat() noexcept : mHealth(10), mMeowCount(3)
 {
 	dummyB = std::rand() % 2;
-	dummyVal64 = std::rand() * 10;
-	dummyVal32 = std::rand();
+	dummyVal64 = (std::rand() * 10) % 1073741823;
+	dummyVal32 = std::rand() % 32767;
 	dummyVal16 = rand() % std::numeric_limits<uint16_t>::max() + 1;
 }
 
@@ -87,6 +90,7 @@ void RoboCat::Deserialize(Serialization::Stream::InputMemoryStream& stream)
 
 void RoboCat::Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& stream)
 {
+	stream.Write(dummyVal16);
 	stream.Write(dummyB, 1);
 	stream.Write(dummyVal32);
 	stream.Write(dummyVal64);
@@ -99,28 +103,49 @@ void RoboCat::Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& 
 	//no solution for mMiceIndices yet 
 }
 
+void RoboCat::Deserialize(Serialization::Stream::DeprecatedInputMemoryBitStream& stream)
+{
+	stream.Read(dummyVal16);
+	stream.Read(dummyB, 1);
+	stream.Read(dummyVal32);
+	stream.Read(dummyVal64);
+}
+
 
 #if 1
-#define SERIALIZE_VALUES				\
-	stream.Write<1>(dummyB);			\
-	stream.Write(dummyB);				\
-	stream.Write<15>(dummyVal32);		\
-	stream.Write<30>(dummyVal64);	
+#define SERIALIZE_VALUES(Action)				\
+	stream.Action(dummyVal16);				\
+	stream.Action(dummyB);				\
+	stream.Action<15>(dummyVal32);		\
+	stream.Action<30>(dummyVal64);	
 #else
 #define SERIALIZE_VALUES				\
-	stream.Write<bool>(dummyB);			\
-	stream.Write<bool>(dummyB);			\
-	stream.Write<uint32_t>(dummyVal32);	\
-	stream.Write<uint64_t>(dummyVal64);			
+	stream.Action(dummyVal16);				\
+	stream.Action<bool>(dummyB);			\
+	stream.Action<uint32_t>(dummyVal32);	\
+	stream.Action<uint64_t>(dummyVal64);			
 #endif
 
 
 void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
 {
-	SERIALIZE_VALUES
+	SERIALIZE_VALUES(Write)
+}
+
+bool RoboCat::NetEqual(const RoboCat& other) const noexcept
+{
+	return dummyB == other.dummyB &&
+		dummyVal16 == other.dummyVal16 &&
+		dummyVal32 == other.dummyVal32 &&
+		dummyVal64 == other.dummyVal64;
 }
 
 void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
 {
-	SERIALIZE_VALUES
+	SERIALIZE_VALUES(Write)
+}
+
+void RoboCat::Deserialize(Serialization::Stream::InputMemoryBitStream& stream)
+{
+	SERIALIZE_VALUES(Read)
 }

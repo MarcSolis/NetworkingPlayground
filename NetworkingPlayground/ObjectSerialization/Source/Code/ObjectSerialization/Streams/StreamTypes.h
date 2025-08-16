@@ -19,6 +19,8 @@ namespace Serialization {
 
 		template <typename T>
 		concept is_serializable_Object = std::is_base_of_v<Serialization::ISerializableObject, T>;
+
+		typedef unsigned char byte;
 	}
 }
 

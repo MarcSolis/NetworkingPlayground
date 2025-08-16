@@ -21,8 +21,6 @@ namespace Serialization { namespace Stream {
 	/// </summary>
 	class OutputMemoryBitStream
 	{
-		typedef unsigned char byte;
-
 	public:
 		OutputMemoryBitStream();
 
@@ -34,6 +32,7 @@ namespace Serialization { namespace Stream {
 
 		inline const byte* GetBufferPtr() const noexcept { return mBuffer; }
 		inline uint32_t GetBitLength() const noexcept { return mBitHead; }
+		inline uint32_t GetByteLength() const noexcept { return (GetBitLength() + 7) >> 3; }
 
 
 		template<uint32_t InBitCount, is_primitive_type T>
@@ -50,12 +49,12 @@ namespace Serialization { namespace Stream {
 		byte WriteFreeBits(const byte* const inData, const byte inBitCount);
 		byte FillFreeBitsLeft(const byte* const inData);	// WriteFreeBits specialization
 
+
 		byte* mBuffer;
 		uint32_t mBitHead;
 		uint32_t mBitCapacity;
 
 		static constexpr uint32_t InitialBufferBitSize{256 * 8};
-		static constexpr uint8_t InDataMaxByteSize{8}; // Max type byte size supported
 		static constexpr std::endian Endian{std::endian::little};
 	};
 
@@ -69,7 +68,7 @@ namespace Serialization { namespace Stream {
 	inline void OutputMemoryBitStream::Write(const T& inData)
 	{
 		static_assert(InBitCount <= (sizeof(inData) << 3), "More bits requested than type provides!");
-		static_assert(sizeof(inData) <= InDataMaxByteSize, "Unsupported type, maximum type size exceeded");
+		static_assert(sizeof(inData) <= MaxDataTypeByteSize, "Unsupported type, maximum type size exceeded");
 
 		constexpr uint32_t InByteCount = (InBitCount + 7) >> 3;
 
