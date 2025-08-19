@@ -21,6 +21,8 @@ namespace Serialization {
 		concept is_serializable_Object = std::is_base_of_v<Serialization::ISerializableObject, T>;
 
 		typedef unsigned char byte;
+
+		static constexpr uint8_t MaxDataTypeByteSize{8};	// Max type size (bytes) supported by the ByteSwapper
 	}
 }
 

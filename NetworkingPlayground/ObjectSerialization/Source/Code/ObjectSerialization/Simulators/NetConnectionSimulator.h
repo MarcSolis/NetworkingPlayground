@@ -1,5 +1,5 @@
 #pragma once
-#include "ObjectSerialization/Streams/StreamTypes.h"
+#include "ObjectSerialization/Streams/StreamDefinitions.h"
 #include "ObjectSerialization/ISerializableObject.h"
 #include "ObjectSerialization/RoboCat.h"
 

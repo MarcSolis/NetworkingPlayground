@@ -1,14 +1,11 @@
 #pragma once
-#include "ObjectSerialization/Streams/StreamTypes.h"
+#include "ObjectSerialization/Streams/StreamDefinitions.h"
 
 #include <cstdint>
 #include <bit>
 
 
 namespace Serialization {
-
-	static constexpr uint8_t MaxDataTypeByteSize{8};	// Max type size (bytes) supported by the ByteSwapper
-
 
 	constexpr inline uint16_t ByteSwap2(uint16_t inData) noexcept
 	{
@@ -90,6 +87,7 @@ namespace Serialization {
 	};
 
 	template <Stream::is_primitive_type T>
+		requires (sizeof(T) <= Stream::MaxDataTypeByteSize)
 	constexpr T ByteSwap(T inData)
 	{
 		return ByteSwapper<T, sizeof(T)>().Swap(inData);

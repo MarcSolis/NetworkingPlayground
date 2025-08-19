@@ -1,6 +1,7 @@
 #pragma once
-#include "ObjectSerialization/Streams/StreamTypes.h"
+#include "ObjectSerialization/Streams/StreamDefinitions.h"
 #include "ObjectSerialization/ByteSwapper.h"
+#include "ObjectSerialization/Streams/StreamType.h"
 
 #include <cstring>
 #include <memory>
@@ -46,6 +47,8 @@ namespace Serialization { namespace Stream {
 		inline uint32_t GetNextFreeByte() const noexcept { return (mBitHead + 7) >> 3; }
 		void ReallocBuffer(uint32_t inNewBitLength);
 
+		template<is_stream_type T, uint32_t InBitCount>
+		void WriteInternal(const T& inData);
 		byte WriteFreeBits(const byte* const inData, const byte inBitCount);
 		byte FillFreeBitsLeft(const byte* const inData);	// WriteFreeBits specialization
 
@@ -61,11 +64,22 @@ namespace Serialization { namespace Stream {
 	template<uint32_t InBitCount, is_primitive_type T>
 	inline void OutputMemoryBitStream::Write(const T& inData)
 	{
-		Write<T, InBitCount>(inData);
+		// reduces memory usage by constraining instantiations to stream types
+		typedef typename AsStreamType<T>::type StreamType;
+		WriteInternal<StreamType, InBitCount>(reinterpret_cast<const StreamType&>(inData));
 	}
 
 	template<is_primitive_type T, uint32_t InBitCount>
 	inline void OutputMemoryBitStream::Write(const T& inData)
+	{
+		// reduces memory usage by constraining instantiations to stream types
+		typedef typename AsStreamType<T>::type StreamType;
+		WriteInternal<StreamType, InBitCount>(reinterpret_cast<const StreamType&>(inData));
+	}
+
+
+	template< is_stream_type T, uint32_t InBitCount>
+	inline void OutputMemoryBitStream::WriteInternal(const T& inData)
 	{
 		static_assert(InBitCount <= (sizeof(inData) << 3), "More bits requested than type provides!");
 		static_assert(sizeof(inData) <= MaxDataTypeByteSize, "Unsupported type, maximum type size exceeded");

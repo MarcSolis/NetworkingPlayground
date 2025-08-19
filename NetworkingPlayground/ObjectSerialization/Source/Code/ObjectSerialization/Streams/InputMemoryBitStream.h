@@ -1,6 +1,7 @@
 #pragma once
-#include "ObjectSerialization/Streams/StreamTypes.h"
+#include "ObjectSerialization/Streams/StreamDefinitions.h"
 #include "ObjectSerialization/ByteSwapper.h"
+#include "ObjectSerialization/Streams/StreamType.h"
 
 #include <memory>
 
@@ -29,8 +30,10 @@ namespace Serialization { namespace Stream {
 
 
 	private:
-		inline const byte* GetCurrentByte() noexcept;
+		inline const byte* GetCurrentByte() noexcept { return mBuffer + (mBitHead >> 3); }
 
+		template<is_stream_type T, uint32_t OutBitCount>
+		void ReadInternal(T& outData);
 		void ReadBits(byte& dest, const byte bitsToRead);
 
 		const byte* mBuffer;
@@ -43,18 +46,28 @@ namespace Serialization { namespace Stream {
 	template<uint32_t OutBitCount, is_primitive_type T>
 	inline void InputMemoryBitStream::Read(T& outData)
 	{
-		Read<T, OutBitCount>(outData);
+		// reduces memory usage by constraining instantiations to stream types
+		typedef typename AsStreamType<T>::type StreamType;
+		ReadInternal<StreamType, OutBitCount>(reinterpret_cast<StreamType&>(outData));
 	}
 
 	template<is_primitive_type T, uint32_t OutBitCount>
 	inline void InputMemoryBitStream::Read(T& outData)
+	{
+		// reduces memory usage by constraining instantiations to stream types
+		typedef typename AsStreamType<T>::type StreamType;
+		ReadInternal<StreamType, OutBitCount>(reinterpret_cast<StreamType&>(outData));
+	}
+
+	template<is_stream_type T, uint32_t OutBitCount>
+	inline void InputMemoryBitStream::ReadInternal(T& outData)
 	{
 		static_assert(OutBitCount <= (sizeof(outData) << 3), "More bits requested than type provides!");
 		static_assert(sizeof(outData) <= MaxDataTypeByteSize, "Unsupported type, maximum type size exceeded");
 
 		constexpr uint32_t OutByteCount = (OutBitCount + 7) >> 3;
 
-		if (mBitHead >= (mByteLength<<3)) [[unlikely]]
+		if (mBitHead >= (mByteLength << 3)) [[unlikely]]
 		{
 			return;
 		}
@@ -82,74 +95,6 @@ namespace Serialization { namespace Stream {
 		{
 			outData = ByteSwap(outData);
 		}
-
-		////
-
-		/*
-		if (const byte bufferOffset = (mBitHead & 0x7))	// buffer is byte-unaligned
-		{
-			inData <<= bufferOffset;
-		}
-		else // buffer is byte-aligned
-		{
-			std::memcpy(&inData, GetBufferHead(), InByteCount);
-
-			if constexpr (InBitCount & 0x7)	// byte-unaligned request
-			{
-				constexpr byte readedDataMask = (0xff >> (InBitCount & 0x7));
-				*(GetBufferHead() + InByteCount) &= readedDataMask;
-			}
-		}
-
-		mBitHead += InBitCount;
-
-		if constexpr (Endian != std::endian::native)
-		{
-			inData = ByteSwap(inData);
-		}
-
-
-		if constexpr (Endian == std::endian::native)
-		{
-			if (mBitHead & 0x7)	// byte-unaligned
-			{
-				if constexpr (InBitCount < 8) // less than a byte
-				{
-					const byte addedBits = WriteFreeBits(reinterpret_cast<const byte*>(&inData), InBitCount);
-					auto shiftedData = inData >> addedBits;
-					std::memcpy(mBuffer + GetNextFreeByte(), &shiftedData, InByteCount);
-				}
-				else
-				{
-					const byte addedBits = FillFreeBitsLeft(reinterpret_cast<const byte*>(&inData));
-					auto shiftedData = inData >> addedBits;
-					std::memcpy(mBuffer + GetNextFreeByte(), &shiftedData, InByteCount);
-				}
-			}
-			else // byte-aligned
-			{
-				std::memcpy(mBuffer + GetNextFreeByte(), &inData, InByteCount);
-			}
-		}
-		else
-		{
-			auto swappedData = Serialization::ByteSwap(inData);
-
-			if constexpr (InBitCount < 8) // less than a byte
-			{
-				const byte addedBits = WriteFreeBits(reinterpret_cast<const byte*>(&swappedData), InBitCount);
-				std::memcpy(mBuffer + GetNextFreeByte(), &(swappedData >>= addedBits), InByteCount);
-			}
-			else
-			{
-				const byte addedBits = FillFreeBitsLeft(reinterpret_cast<const byte*>(&swappedData));
-				std::memcpy(mBuffer + GetNextFreeByte(), &(swappedData >>= addedBits), InByteCount);
-			}
-		}
-
-		mBitHead += InBitCount;
-		*/
-
 	}
 
 

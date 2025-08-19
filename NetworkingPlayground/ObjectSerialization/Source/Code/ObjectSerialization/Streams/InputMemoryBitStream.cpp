@@ -28,14 +28,9 @@ namespace Serialization { namespace Stream {
 		return *this;
 	}
 
-	inline const byte* InputMemoryBitStream::GetCurrentByte() noexcept
-	{
-		return mBuffer + (mBitHead>>3);
-	}
-
 	void InputMemoryBitStream::ReadBits(byte& dest, const byte bitsOffset)
 	{
-		byte bitsToAdd = *GetCurrentByte() << bitsOffset;
+		const byte bitsToAdd = *GetCurrentByte() << bitsOffset;
 		const byte currentMask = ~(0xff << bitsOffset);
 		dest = (dest & currentMask) | bitsToAdd;
 	}
