@@ -46,18 +46,20 @@ public:
 	virtual void Serialize(Serialization::Stream::DeprecatedOutputMemoryBitStream& stream) override;
 	virtual void Deserialize(Serialization::Stream::DeprecatedInputMemoryBitStream& stream) override;
 
-	void SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream);
+	virtual void Serialize(Serialization::Stream::OutputMemoryStream& stream) override;
+	virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
+
+	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
+	virtual void Deserialize(Serialization::Stream::InputMemoryBitStream& stream) override;
+	virtual void Deserialize(Serialization::Stream::InputMemoryBitStreamV2& stream) override;
+
 
 	bool NetEqual(const RoboCat& other) const noexcept;
 
 
 protected:
 	virtual void Update() override {};
-	virtual void Serialize(Serialization::Stream::OutputMemoryStream& stream) override;
-	virtual void Deserialize(Serialization::Stream::InputMemoryStream& stream) override;
 
-	virtual void Serialize(Serialization::Stream::OutputMemoryBitStream& stream) override;
-	virtual void Deserialize(Serialization::Stream::InputMemoryBitStream& stream) override;
 
 	
 

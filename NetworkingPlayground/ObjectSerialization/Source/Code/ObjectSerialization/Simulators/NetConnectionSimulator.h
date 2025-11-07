@@ -32,6 +32,10 @@ namespace Simulator {
 		template <typename ObjectTypeT>
 			requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
 		void SimulateBitStreamReplication(const ObjectTypeT* src, ObjectTypeT* dest);
+
+		template <typename ObjectTypeT>
+			requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
+		void SimulateBitStreamReplicationV2(const ObjectTypeT* src, ObjectTypeT* dest);
 	};
 
 	template<typename ObjectTypeT>
@@ -83,6 +87,23 @@ namespace Simulator {
 		static_cast<Serialization::ISerializableObject*>(dest)->Deserialize(inputStream);
 
 		std::cout << "[OutputMemoryBitStream] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
+	}
+
+	template<typename ObjectTypeT>
+		requires Serialization::Stream::is_serializable_Object<ObjectTypeT>
+	inline void NetConnectionSimulator::SimulateBitStreamReplicationV2(const ObjectTypeT* src, ObjectTypeT* dest)
+	{
+		Serialization::Stream::OutputMemoryBitStream outputStream;
+		{
+			ObjectTypeT tempObj{*src};
+			static_cast<Serialization::ISerializableObject*>(&tempObj)->Serialize(outputStream);
+			memset(&tempObj, 0, sizeof(ObjectTypeT));	// Simulating data mismatch on mem address
+		}
+
+		Serialization::Stream::InputMemoryBitStreamV2 inputStream(outputStream.GetBufferPtr(), outputStream.GetByteLength());
+		static_cast<Serialization::ISerializableObject*>(dest)->Deserialize(inputStream);
+
+		std::cout << "[OutputMemoryBitStreamV2] Transmitted data for " << typeid(ObjectTypeT).name() << ": " << outputStream.GetByteLength() << " bytes" << std::endl;
 	}
 }
 

@@ -7,7 +7,7 @@
 
 #include <cassert>
 
-
+#pragma region FunctionalTesting
 static void NaiveSerializationTest()
 {
 	Serialization::NaivelySerialization<NaiveRoboCat> serializer{};
@@ -91,31 +91,154 @@ static void StreamBitSerializationTest()
 	assert(originalRC.NetEqual(copyRC));
 }
 
-static void StreamBitSerializationPerfTest(std::vector<RoboCat>& roboCats)
+static void StreamBitSerializationV2Test()
 {
+	Simulator::NetConnectionSimulator connectionSimulator;
+
+	RoboCat originalRC;
+	const char name[]{"Abel"};
+	originalRC.SetName(name, sizeof(name));
+
+	RoboCat copyRC;
+
+	assert(originalRC != copyRC);
+
+	connectionSimulator.SimulateBitStreamReplicationV2(&originalRC, &copyRC);
+
+	assert(originalRC.NetEqual(copyRC));
+}
+
+#pragma endregion //Functinal Testing
+
+#pragma region PerfTesting
+static void DeprecatedStreamBitOutputSerializationPerf(const int iterations)
+{
+	RoboCat rb;
 	Serialization::Stream::DeprecatedOutputMemoryBitStream outputStream;
 
+	std::cout << "StreamBit Output Base Test" << std::endl;
 	{
-		//profiler::Timer timer(true);
-		for (auto& rb : roboCats)
+		profiler::Timer timer;
+		for (auto i = 0; i < iterations; ++i)
 		{
 			rb.Serialize(outputStream);
 		}
 	}
+}
 
-	//std::cout << "Stream size: " << outputStream.GetByteLength() << " Bytes" << std::endl;
+static void StreamBitOutputSerializationPerf(const int iterations)
+{
+	RoboCat rb;
+	Serialization::Stream::OutputMemoryBitStream outputStream;
+
+	std::cout << "StreamBit Output Optimization V5.2 Test" << std::endl;
+	{
+		profiler::Timer timer;
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.Serialize(outputStream);
+		}
+	}
+}
+
+static void DeprecatedStreamBitInputSerializationPerf(const int iterations)
+{
+	RoboCat rb;
+	Serialization::Stream::DeprecatedOutputMemoryBitStream outputStream;
+
+	for (auto i = 0; i < iterations; ++i)
+	{
+		rb.Serialize(outputStream);
+	}
+
+	Serialization::Stream::DeprecatedInputMemoryBitStream inputStream(outputStream.GetBufferPtr(), outputStream.GetBitLength());
+
+	std::cout << "StreamBit Input Base Test" << std::endl;
+	{
+		profiler::Timer timer;
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.Deserialize(inputStream);
+		}
+	}
 }
 
 
+static void StreamBitInputSerializationPerf(const int iterations)
+{
+	RoboCat rb;
+	Serialization::Stream::OutputMemoryBitStream outputStream;
+
+	for (auto i = 0; i < iterations; ++i)
+	{
+		rb.Serialize(outputStream);
+	}
+
+	Serialization::Stream::InputMemoryBitStream inputStream(outputStream.GetBufferPtr(), outputStream.GetBitLength());
+
+	std::cout << "StreamBit Input Optimization V1 Test" << std::endl;
+	{
+		profiler::Timer timer;
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.Deserialize(inputStream);
+		}
+	}
+}
+
+static void StreamBitInputSerializationPerfV2(const int iterations)
+{
+	RoboCat rb;
+	Serialization::Stream::OutputMemoryBitStream outputStream;
+
+	for (auto i = 0; i < iterations; ++i)
+	{
+		rb.Serialize(outputStream);
+	}
+
+	Serialization::Stream::InputMemoryBitStreamV2 inputStream(outputStream.GetBufferPtr(), outputStream.GetBitLength());
+
+	std::cout << "StreamBit Input Optimization V2 Test" << std::endl;
+	{
+		profiler::Timer timer;
+		for (auto i = 0; i < iterations; ++i)
+		{
+			rb.Deserialize(inputStream);
+		}
+	}
+}
+#pragma endregion // Perf testing
+
 int main(int argc, char** argv)
 {
-	//NaiveSerializationTest();
-	//StreamSerializationTest();
-	DeprecatedStreamBitSerializationTest();
-	StreamBitSerializationTest();
 
+	
+
+	std::srand(static_cast<unsigned int>(std::time({}))); // use current time as seed for random generator
+	int result = 0;
+
+	{
+		profiler::Timer timer;
+		for (int i = 0; i < 100000; ++i)
+		{
+			result += (rand() > rand()) + 1;
+		}
+	}
+	
+	std::cout << "Result: " << result << std::endl;
 
 	return 0;
+
+
+
+	//NaiveSerializationTest();
+	//StreamSerializationTest();
+	//DeprecatedStreamBitSerializationTest();
+	//StreamBitSerializationTest();
+	//StreamBitSerializationV2Test();
+	//
+	//
+	//return 0;
 
 	Serialization::Stream::DeprecatedOutputMemoryBitStream outputStream;
 	Serialization::Stream::OutputMemoryBitStream outputStream52;
@@ -123,32 +246,20 @@ int main(int argc, char** argv)
 
 	//{
 	//	profiler::Timer timer;
-	//	rb.SerializeAlt(outputStream52);
+	//	rb.Serialize(outputStream52);
 	//}
-	//
+	
 	//return 0;
 
 
 	constexpr int iterations{1000000};
 
-	
-	std::cout << "StreamBit Base Test" << std::endl;
-	{
-		profiler::Timer timer;
-		for (auto i = 0; i < iterations; ++i)
-		{
-			rb.Serialize(outputStream);
-		}
-	}
+	//DeprecatedStreamBitOutputSerializationPerf(iterations);
+	//StreamBitOutputSerializationPerf(iterations);
 
-	std::cout << "StreamBit Optimization V5.2 Test" << std::endl;
-	{
-		profiler::Timer timer;
-		for (auto i = 0; i < iterations; ++i)
-		{
-			rb.SerializeAlt(outputStream52);
-		}
-	}
+	//DeprecatedStreamBitInputSerializationPerf(iterations);
+	//StreamBitInputSerializationPerf(iterations);
+	StreamBitInputSerializationPerfV2(iterations);
 
 
 	

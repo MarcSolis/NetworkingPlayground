@@ -11,6 +11,8 @@ namespace Serialization {
 
 		class OutputMemoryBitStream;
 		class InputMemoryBitStream;
+
+		class InputMemoryBitStreamV2;
 	}
 
 
@@ -25,6 +27,8 @@ namespace Serialization {
 
 		virtual void Serialize(Stream::OutputMemoryBitStream& stream) = 0;
 		virtual void Deserialize(Stream::InputMemoryBitStream& stream) = 0;
+
+		virtual void Deserialize(Stream::InputMemoryBitStreamV2& stream) = 0;
 
 		virtual ~ISerializableObject() = default;
 	};

@@ -31,7 +31,7 @@ namespace Serialization {
                const auto orginalObjectState = mSerializableObj;
 			   mSerializableObj.Serialize(mOutputStream);
 
-                EXPECT_TRUE(orginalObjectState == mSerializableObj);
+               EXPECT_TRUE(orginalObjectState == mSerializableObj);
             }
 
 			TEST_F(ABitStreamTest, WhenSerializeVariableFullSize_ThenStoresCorrectByteAmount)

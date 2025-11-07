@@ -113,24 +113,19 @@ void RoboCat::Deserialize(Serialization::Stream::DeprecatedInputMemoryBitStream&
 
 
 #if 1
-#define SERIALIZE_VALUES(Action)				\
-	stream.Action(dummyVal16);				\
-	stream.Action(dummyB);				\
-	stream.Action<15>(dummyVal32);		\
-	stream.Action<30>(dummyVal64);	
+#define SERIALIZE_VALUES(Action)			\
+	stream.Action<8>(dummyVal16);			\
+	stream.Action(dummyB);					\
+	stream.Action<24>(dummyVal32);			\
+	stream.Action<56>(dummyVal64);	
 #else
-#define SERIALIZE_VALUES				\
+#define SERIALIZE_VALUES					\
 	stream.Action(dummyVal16);				\
 	stream.Action<bool>(dummyB);			\
 	stream.Action<uint32_t>(dummyVal32);	\
 	stream.Action<uint64_t>(dummyVal64);			
 #endif
 
-
-void RoboCat::SerializeAlt(Serialization::Stream::OutputMemoryBitStream& stream)
-{
-	SERIALIZE_VALUES(Write)
-}
 
 bool RoboCat::NetEqual(const RoboCat& other) const noexcept
 {
@@ -146,6 +141,11 @@ void RoboCat::Serialize(Serialization::Stream::OutputMemoryBitStream& stream)
 }
 
 void RoboCat::Deserialize(Serialization::Stream::InputMemoryBitStream& stream)
+{
+	SERIALIZE_VALUES(Read)
+}
+
+void RoboCat::Deserialize(Serialization::Stream::InputMemoryBitStreamV2& stream)
 {
 	SERIALIZE_VALUES(Read)
 }

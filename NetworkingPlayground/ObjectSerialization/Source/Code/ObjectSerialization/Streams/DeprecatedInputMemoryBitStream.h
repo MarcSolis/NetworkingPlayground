@@ -23,7 +23,7 @@ namespace Serialization { namespace Stream {
 		void Read(T& outData, size_t outBitCount = sizeof(T) << 3);
 
 		template <is_primitive_type T, size_t N>
-		void Read(T(&inData)[N]);
+		void Read(T(&outData)[N]);
 
 	private:
 		void ReadBitsInternal(uint8_t& inData, size_t inBitCount);
@@ -49,21 +49,16 @@ namespace Serialization { namespace Stream {
 	}
 
 	template<is_primitive_type T, size_t N>
-	inline void DeprecatedInputMemoryBitStream::Read(T(&inData)[N])
+	inline void DeprecatedInputMemoryBitStream::Read(T(&outData)[N])
 	{
-		if constexpr (std::endian::native == mEndian)
+		ReadBits(&outData, sizeof(outData) << 3);
+
+		if constexpr (std::endian::native != mEndian)
 		{
-			ReadBits(&inData, sizeof(inData) << 3);
-		}
-		else
-		{
-			T swappedData[N];
 			for (size_t i = 0; i < N; ++i)
 			{
-				swappedData[i] = Serialization::ByteSwap(inData[i]);
+				outData[i] = Serialization::ByteSwap(outData[i]);
 			}
-
-			ReadBits(&swappedData, sizeof(swappedData) << 3);
 		}
 	}
 }}
